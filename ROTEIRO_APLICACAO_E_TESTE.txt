@@ -1,0 +1,48 @@
+COMO APLICAR
+
+1. Confirme no GitHub Desktop que a branch atual é:
+   sprint-3-cadastros-mestres
+
+2. Feche o SmartBuy com CTRL+C na janela preta.
+
+3. Extraia a pasta smartbuy-sprint-3-patch.
+
+4. Copie a pasta inteira smartbuy-sprint-3-patch para dentro de:
+   Documentos\GitHub\SmartBuy
+
+5. A estrutura deverá ficar:
+   SmartBuy
+   ├── app
+   ├── tests
+   ├── smartbuy-sprint-3-patch
+   └── INICIAR_SMARTBUY.bat
+
+6. Entre em smartbuy-sprint-3-patch e execute:
+   APLICAR_SPRINT_3.bat
+
+7. O aplicador criará automaticamente:
+   backup_antes_sprint3_DATA_HORA
+
+8. Execute INICIAR_SMARTBUY.bat na raiz do SmartBuy.
+
+ROTEIRO DE TESTE
+
+1. Entre como administrador.
+2. Abra "Cadastros mestres" no menu.
+3. Cadastre:
+   - um fabricante;
+   - um NCM;
+   - um CFOP;
+   - um CST ICMS;
+   - um CST IPI.
+4. Abra "Depósitos e localizações".
+5. Cadastre um depósito vinculado a uma empresa.
+6. Cadastre uma localização nesse depósito.
+7. Inative e reative um cadastro.
+8. Abra Auditoria e confirme os eventos.
+9. Execute:
+   .venv\Scripts\python -m pytest
+
+COMMIT SUGERIDO
+
+Sprint 3 - Cadastros mestres fiscais e logísticos

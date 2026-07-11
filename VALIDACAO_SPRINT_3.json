@@ -1,0 +1,7 @@
+{
+  "python_syntax": "ok",
+  "patch_is_incremental": true,
+  "backup_created_by_installer": true,
+  "preserves_sprint_2": true,
+  "runtime_validation": "Executar no repositório local do usuário."
+}
