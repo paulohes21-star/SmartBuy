@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Códigos externos" %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">INTEGRAÇÃO ERP</p>
+    <h1>{{ product["internal_code"] }} — {{ product["description"] }}</h1>
+    <p class="muted">
+      Relacione o produto aos códigos utilizados por cada ERP e empresa.
+    </p>
+  </div>
+</section>
+
+{% if request.query_params.get("error") == "duplicate" %}
+<div class="error">Este código externo já está cadastrado.</div>
+{% endif %}
+
+{% if "catalog.external_codes" in permissions %}
+<form class="form-card" method="post">
+  <h2>Novo código externo</h2>
+  <div class="form-grid">
+    <label>
+      Sistema de origem
+      <input name="source_system" placeholder="SANKHYA, PROTHEUS, ERP_GW" required>
+    </label>
+    <label>
+      Código externo
+      <input name="external_code" required>
+    </label>
+    <label>
+      Empresa
+      <select name="company_id">
+        <option value="">Código global</option>
+        {% for company in companies %}
+        <option value="{{ company['id'] }}">
+          {{ company["code"] }} —
+          {{ company["trade_name"] or company["legal_name"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Descrição no ERP
+      <input name="external_description">
+    </label>
+  </div>
+  <button type="submit">Adicionar código externo</button>
+</form>
+{% endif %}
+
+<section class="table-card">
+  <table>
+    <thead>
+      <tr>
+        <th>Sistema</th>
+        <th>Empresa</th>
+        <th>Código externo</th>
+        <th>Descrição externa</th>
+        <th>Status de sincronização</th>
+        <th>Última sincronização</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for code in codes %}
+      <tr>
+        <td>{{ code["source_system"] }}</td>
+        <td>
+          {% if code["company_id"] %}
+            {{ code["company_code"] }} — {{ code["company_name"] }}
+          {% else %}
+            Global
+          {% endif %}
+        </td>
+        <td>{{ code["external_code"] }}</td>
+        <td>{{ code["external_description"] or "—" }}</td>
+        <td>{{ code["sync_status"] }}</td>
+        <td>{{ code["last_sync_at"] or "—" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">Nenhum código externo cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

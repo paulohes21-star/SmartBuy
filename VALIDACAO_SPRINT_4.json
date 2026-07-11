@@ -1,0 +1,9 @@
+{
+  "python_syntax": "ok",
+  "incremental_patch": true,
+  "automatic_backup": true,
+  "idempotent_database_migration": true,
+  "two_step_import": true,
+  "transactional_confirmation": true,
+  "runtime_validation_required_on_user_branch": true
+}
