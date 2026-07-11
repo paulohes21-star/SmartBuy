@@ -1,4 +1,4 @@
-# SMARTBUY_SPRINT_4_ROUTER
-from app.intelligent_products import router as intelligent_products_router
+# SMARTBUY_SPRINT_5_ROUTER
+from app.purchasing_intelligence import router as purchasing_intelligence_router
 
-app.include_router(intelligent_products_router)
+app.include_router(purchasing_intelligence_router)

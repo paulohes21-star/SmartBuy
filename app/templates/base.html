@@ -1,5 +1,9 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ title or "SmartBuy" }}</title><link rel="stylesheet" href="/static/style.css">  <link rel="stylesheet" href="/static/sprint4.css">
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ title or "SmartBuy" }}</title><link rel="stylesheet" href="/static/style.css">  <link rel="stylesheet" href="/static/sprint5.css">
 </head><body>
 <div class="shell"><aside><div class="brand"><span>SB</span> SmartBuy</div><nav>
 <a href="/dashboard">Dashboard</a>{% if "companies.read" in permissions %}<a href="/companies">Empresas</a>{% endif %}{% if "catalog.read" in permissions %}<a href="/products">Produtos</a><a href="/catalog/settings">Cadastros</a>{% endif %}{% if "users.read" in permissions %}<a href="/users">Usuários</a>{% endif %}{% if "audit.read" in permissions %}<a href="/audit">Auditoria</a>{% endif %}
+<!-- SMARTBUY_SPRINT_5_MENU -->
+{% if "purchasing_intelligence.read" in permissions %}
+<a href="/purchasing-intelligence">Inteligência de compras</a>
+{% endif %}
 </nav></aside><main><header><div><small>SmartBuy Sprint 2</small><strong>{{ user["full_name"] }}</strong><em>{{ user["role_name"] }}</em></div><form method="post" action="/logout"><button class="secondary">Sair</button></form></header>{% block content %}{% endblock %}</main></div></body></html>
