@@ -1,0 +1,11 @@
+{
+  "python_syntax": "ok",
+  "incremental_patch": true,
+  "automatic_backup": true,
+  "idempotent_migration": true,
+  "explainable_recommendations": true,
+  "abc_by_consumption_value": true,
+  "weighted_average_cost": true,
+  "quote_landed_cost": true,
+  "runtime_validation_required_on_user_branch": true
+}

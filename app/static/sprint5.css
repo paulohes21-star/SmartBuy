@@ -1,0 +1,60 @@
+/* SmartBuy Sprint 5 */
+.sprint5-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 20px;
+}
+.sprint5-filter {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+}
+.sprint5-filter select {
+  min-width: 190px;
+}
+.sprint5-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+.sprint5-grid .form-card {
+  display: grid;
+  gap: 10px;
+}
+.sprint5-table {
+  overflow-x: auto;
+}
+.sprint5-table table {
+  min-width: 1400px;
+}
+.row-alert {
+  background: rgb(255 184 76 / 6%);
+}
+.abc {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-weight: 900;
+}
+.abc-a {
+  background: rgb(255 107 107 / 18%);
+}
+.abc-b {
+  background: rgb(255 208 92 / 18%);
+}
+.abc-c {
+  background: rgb(46 230 166 / 18%);
+}
+@media (max-width: 900px) {
+  .sprint5-header,
+  .sprint5-filter {
+    display: grid;
+  }
+  .sprint5-grid {
+    grid-template-columns: 1fr;
+  }
+}

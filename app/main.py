@@ -296,7 +296,7 @@ async def import_products(request:Request,file:UploadFile=File(...)):
         c.commit()
     database.audit(user['id'],'product.imported',f'sucesso={success};erros={len(errors)}'); return templates.TemplateResponse('import_result.html',base_context(request,user,success=success,errors=errors))
 
-# SMARTBUY_SPRINT_4_ROUTER
-from app.intelligent_products import router as intelligent_products_router
+# SMARTBUY_SPRINT_5_ROUTER
+from app.purchasing_intelligence import router as purchasing_intelligence_router
 
-app.include_router(intelligent_products_router)
+app.include_router(purchasing_intelligence_router)

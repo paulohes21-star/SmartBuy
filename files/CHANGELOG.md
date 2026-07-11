@@ -1,27 +1,33 @@
 # Changelog
 
-## v0.4.0 — Cadastro Inteligente de Produtos
+## v0.5.0 — Motor Inteligente de Compras
 
 ### Adicionado
 
-- pesquisa inteligente;
-- referência do fabricante;
-- códigos externos por ERP e empresa;
-- detecção de duplicidade;
-- lotes de importação;
-- validação antes da confirmação;
-- relatório por linha e campo;
-- atualização sem duplicação;
-- auditoria dos lotes;
-- testes da Sprint 4;
-- documentação técnica.
+- histórico de movimentações e consumo;
+- histórico de custos;
+- custo médio ponderado;
+- política automática por produto e empresa;
+- estoque de segurança;
+- ponto de reposição;
+- estoque-alvo;
+- sugestão automática de compra;
+- cobertura e previsão de ruptura;
+- Curva ABC;
+- giro de estoque;
+- fotografias de estoque;
+- fornecedores preferenciais;
+- cotações e custo final comparável;
+- dashboard de inteligência;
+- permissões, auditoria e testes;
+- preparação de dados para IA.
 
 ### Preservado
 
-- autenticação;
-- empresas e usuários;
-- catálogo atual;
-- produtos e estoque por empresa;
+- autenticação e usuários;
+- empresas;
+- catálogo;
 - cadastros mestres;
-- exportação Excel;
-- histórico e auditoria.
+- importação inteligente;
+- códigos externos e preparação para ERP;
+- auditoria anterior.
