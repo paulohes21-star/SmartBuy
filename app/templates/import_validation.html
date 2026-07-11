@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Validação da importação" %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">IMPORTAÇÃO INTELIGENTE</p>
+    <h1>Validação antes da gravação</h1>
+    <p class="muted">
+      Nenhuma linha foi gravada. Revise erros e alertas antes de confirmar.
+    </p>
+  </div>
+</section>
+
+{% for error in header_errors %}
+<div class="error">{{ error }}</div>
+{% endfor %}
+
+{% if batch %}
+<section class="cards">
+  <article class="card">
+    <small>Arquivo</small>
+    <strong style="font-size:16px">{{ batch.filename }}</strong>
+  </article>
+  <article class="card">
+    <small>Total</small>
+    <strong>{{ batch.total_rows }}</strong>
+  </article>
+  <article class="card">
+    <small>Válidas</small>
+    <strong class="success">{{ batch.valid_rows }}</strong>
+  </article>
+  <article class="card">
+    <small>Com erro</small>
+    <strong>{{ batch.error_rows }}</strong>
+  </article>
+</section>
+
+<section class="table-card">
+  <table>
+    <thead>
+      <tr>
+        <th>Linha</th>
+        <th>Operação</th>
+        <th>Código</th>
+        <th>Descrição</th>
+        <th>Validação</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.row_number }}</td>
+        <td>{{ row.operation }}</td>
+        <td>{{ row.internal_code }}</td>
+        <td>{{ row.description }}</td>
+        <td>
+          {% if row.errors %}
+            <span class="badge-inactive">Erro</span>
+            <ul>
+              {% for item in row.errors %}<li>{{ item }}</li>{% endfor %}
+            </ul>
+          {% else %}
+            <span class="badge-active">Válida</span>
+          {% endif %}
+          {% if row.warnings %}
+            <ul>
+              {% for item in row.warnings %}<li>Alerta: {{ item }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<div class="master-actions" style="margin-top:18px">
+  <a class="secondary button-link" href="/products">Voltar</a>
+  {% if batch.error_rows == 0 and "catalog.import.confirm" in permissions %}
+  <form method="post"
+        action="/products/intelligent/import/{{ batch.id }}/confirm">
+    <input type="hidden" name="token" value="{{ batch.token }}">
+    <button type="submit">
+      Confirmar importação de {{ batch.valid_rows }} linha(s)
+    </button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Cadastros mestres" %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">CADASTROS MESTRES</p>
+    <h1>Base fiscal e logística</h1>
+    <p class="muted">
+      Cadastros utilizados por produtos, estoque, compras e integrações com ERP.
+    </p>
+  </div>
+</section>
+
+<nav class="master-tabs" aria-label="Cadastros mestres">
+  {% for key, item in entities.items() %}
+  <a
+    href="/master-data?section={{ key }}"
+    class="{{ 'active' if section == key else '' }}"
+  >
+    {{ item.title }}
+  </a>
+  {% endfor %}
+  <a
+    href="/master-data?section=warehouses"
+    class="{{ 'active' if section == 'warehouses' else '' }}"
+  >
+    Depósitos e localizações
+  </a>
+</nav>
+
+{% if error %}
+<div class="error">
+  {% if error == "duplicate" %}
+    Código ou descrição já cadastrados.
+  {% elif error == "warehouse" %}
+    Depósito duplicado ou empresa inválida.
+  {% elif error == "location" %}
+    Localização duplicada ou depósito inválido.
+  {% else %}
+    Preencha todos os campos obrigatórios.
+  {% endif %}
+</div>
+{% endif %}
+
+{% if section != "warehouses" %}
+  {% if "master_data.write" in permissions %}
+  <form class="form-card" method="post" action="/master-data/{{ section }}">
+    <h2>Novo cadastro — {{ entity.title }}</h2>
+
+    <div class="form-grid">
+      {% if "code" in entity.fields %}
+      <label>
+        Código
+        <input name="code" maxlength="20" required>
+      </label>
+      {% endif %}
+
+      {% if "name" in entity.fields %}
+      <label>
+        Nome
+        <input name="name" maxlength="160" required>
+      </label>
+      {% endif %}
+
+      {% if "description" in entity.fields %}
+      <label>
+        Descrição
+        <input name="description" maxlength="240" required>
+      </label>
+      {% endif %}
+
+      {% if "national_rate" in entity.fields %}
+      <label>
+        Alíquota nacional (%)
+        <input name="national_rate" type="number" step="0.01" min="0" value="0">
+      </label>
+      {% endif %}
+
+      {% if "imported_rate" in entity.fields %}
+      <label>
+        Alíquota importada (%)
+        <input name="imported_rate" type="number" step="0.01" min="0" value="0">
+      </label>
+      {% endif %}
+
+      {% if "operation_type" in entity.fields %}
+      <label>
+        Tipo de operação
+        <select name="operation_type">
+          <option value="ENTRADA">Entrada</option>
+          <option value="SAIDA">Saída</option>
+        </select>
+      </label>
+      {% endif %}
+    </div>
+
+    <button type="submit">Cadastrar</button>
+  </form>
+  {% endif %}
+
+  <section class="table-card">
+    <table>
+      <thead>
+        <tr>
+          {% for field in entity.fields %}
+          <th>
+            {% if field == "code" %}Código
+            {% elif field == "name" %}Nome
+            {% elif field == "description" %}Descrição
+            {% elif field == "national_rate" %}Alíquota nacional
+            {% elif field == "imported_rate" %}Alíquota importada
+            {% elif field == "operation_type" %}Operação
+            {% else %}{{ field }}
+            {% endif %}
+          </th>
+          {% endfor %}
+          <th>Status</th>
+          {% if "master_data.write" in permissions %}<th>Ação</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          {% for field in entity.fields %}
+          <td>
+            {{ row[field] }}
+            {% if field in ["national_rate", "imported_rate"] %}%{% endif %}
+          </td>
+          {% endfor %}
+          <td>
+            <span class="{{ 'badge-active' if row['active'] else 'badge-inactive' }}">
+              {{ "Ativo" if row["active"] else "Inativo" }}
+            </span>
+          </td>
+          {% if "master_data.write" in permissions %}
+          <td>
+            <form
+              class="inline-form"
+              method="post"
+              action="/master-data/{{ section }}/{{ row['id'] }}/toggle"
+            >
+              <button class="secondary button-small" type="submit">
+                {{ "Inativar" if row["active"] else "Ativar" }}
+              </button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8">Nenhum registro cadastrado.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+{% else %}
+
+  {% if "master_data.write" in permissions %}
+  <form class="form-card" method="post" action="/master-data/warehouses">
+    <h2>Novo depósito</h2>
+    <div class="form-grid">
+      <label>
+        Empresa
+        <select name="company_id" required>
+          {% for company in companies %}
+          <option value="{{ company['id'] }}">
+            {{ company["code"] }} —
+            {{ company["trade_name"] or company["legal_name"] }}
+          </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Código
+        <input name="code" maxlength="30" required>
+      </label>
+      <label>
+        Nome do depósito
+        <input name="name" maxlength="160" required>
+      </label>
+    </div>
+    <button type="submit">Cadastrar depósito</button>
+  </form>
+
+  <form class="form-card" method="post" action="/master-data/locations">
+    <h2>Nova localização</h2>
+    <div class="form-grid">
+      <label>
+        Depósito
+        <select name="warehouse_id" required>
+          {% for warehouse in warehouses %}
+          <option value="{{ warehouse['id'] }}">
+            {{ warehouse["company_code"] }} /
+            {{ warehouse["code"] }} — {{ warehouse["name"] }}
+          </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Código da localização
+        <input name="code" maxlength="40" required>
+      </label>
+      <label>
+        Descrição
+        <input name="description" maxlength="200">
+      </label>
+      <label>Corredor<input name="aisle" maxlength="40"></label>
+      <label>Estante<input name="rack" maxlength="40"></label>
+      <label>Nível<input name="level" maxlength="40"></label>
+      <label>Posição<input name="bin" maxlength="40"></label>
+    </div>
+    <button type="submit">Cadastrar localização</button>
+  </form>
+  {% endif %}
+
+  <section class="table-card">
+    <h2>Depósitos</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Empresa</th>
+          <th>Código</th>
+          <th>Nome</th>
+          <th>Localizações</th>
+          <th>Status</th>
+          {% if "master_data.write" in permissions %}<th>Ação</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row["company_code"] }} — {{ row["company_name"] }}</td>
+          <td>{{ row["code"] }}</td>
+          <td>{{ row["name"] }}</td>
+          <td>{{ row["location_count"] }}</td>
+          <td>
+            <span class="{{ 'badge-active' if row['active'] else 'badge-inactive' }}">
+              {{ "Ativo" if row["active"] else "Inativo" }}
+            </span>
+          </td>
+          {% if "master_data.write" in permissions %}
+          <td>
+            <form
+              class="inline-form"
+              method="post"
+              action="/master-data/warehouses/{{ row['id'] }}/toggle"
+            >
+              <button class="secondary button-small" type="submit">
+                {{ "Inativar" if row["active"] else "Ativar" }}
+              </button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% else %}
+        <tr><td colspan="6">Nenhum depósito cadastrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="table-card">
+    <h2>Localizações</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Empresa</th>
+          <th>Depósito</th>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Endereço interno</th>
+          <th>Status</th>
+          {% if "master_data.write" in permissions %}<th>Ação</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in locations %}
+        <tr>
+          <td>{{ row["company_code"] }}</td>
+          <td>{{ row["warehouse_code"] }} — {{ row["warehouse_name"] }}</td>
+          <td>{{ row["code"] }}</td>
+          <td>{{ row["description"] or "—" }}</td>
+          <td>
+            C: {{ row["aisle"] or "—" }} /
+            E: {{ row["rack"] or "—" }} /
+            N: {{ row["level"] or "—" }} /
+            P: {{ row["bin"] or "—" }}
+          </td>
+          <td>
+            <span class="{{ 'badge-active' if row['active'] else 'badge-inactive' }}">
+              {{ "Ativa" if row["active"] else "Inativa" }}
+            </span>
+          </td>
+          {% if "master_data.write" in permissions %}
+          <td>
+            <form
+              class="inline-form"
+              method="post"
+              action="/master-data/locations/{{ row['id'] }}/toggle"
+            >
+              <button class="secondary button-small" type="submit">
+                {{ "Inativar" if row["active"] else "Ativar" }}
+              </button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% else %}
+        <tr><td colspan="7">Nenhuma localização cadastrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endif %}
+{% endblock %}

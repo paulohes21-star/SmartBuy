@@ -1,0 +1,53 @@
+/* SmartBuy Sprint 4 */
+.actions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.button-link {
+  display: inline-block;
+  padding: 12px 16px;
+  border-radius: 11px;
+  background: var(--brand);
+  color: #06251c;
+  font-weight: 800;
+  text-decoration: none;
+}
+.success-box {
+  padding: 12px;
+  margin: 14px 0;
+  border-radius: 11px;
+  background: rgb(46 230 166 / 12%);
+  color: var(--brand);
+}
+.smart-search-results {
+  position: absolute;
+  z-index: 30;
+  width: min(720px, 90vw);
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #081310;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 35%);
+}
+.smart-search-results a {
+  display: grid;
+  grid-template-columns: 130px 1fr 160px;
+  gap: 12px;
+  padding: 12px;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+.smart-search-results a:hover {
+  background: #123027;
+}
+.smart-search-results small {
+  color: var(--muted);
+}
+.pagination-label {
+  text-align: center;
+  color: var(--muted);
+}
