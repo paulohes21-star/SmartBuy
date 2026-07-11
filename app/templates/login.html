@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartBuy</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-page">
+<div class="login-shell">
+<section class="intro">
+<div class="brand"><span>SB</span> SmartBuy</div>
+<h1>Inteligência para comprar melhor.</h1>
+<p>Base local com login, empresas, usuários e permissões.</p>
+</section>
+<section class="login-card">
+<h2>Entrar</h2>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+<form method="post" action="/login">
+<label>E-mail<input name="email" type="email" value="admin@smartbuy.local" required></label>
+<label>Senha<input name="password" type="password" value="SmartBuy@123" required></label>
+<button>Entrar no SmartBuy</button>
+</form>
+<div class="hint"><b>E-mail:</b> admin@smartbuy.local<br><b>Senha:</b> SmartBuy@123</div>
+</section>
+</div>
+</body>
+</html>

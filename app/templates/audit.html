@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Auditoria</h1><p class="muted">Histórico das ações importantes.</p>
+<div class="table-card"><table><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Detalhes</th></tr>
+{% for e in events %}<tr><td>{{ e["created_at"] }}</td><td>{{ e["actor"] or "Sistema" }}</td><td>{{ e["action"] }}</td><td>{{ e["details"] or "—" }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

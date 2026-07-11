@@ -1,0 +1,7 @@
+1. Execute INICIAR_SMARTBUY.bat.
+2. Entre com admin@smartbuy.local / SmartBuy@123.
+3. Abra Empresas e cadastre uma empresa.
+4. Abra Usuários e cadastre um VIEWER.
+5. Saia e entre como VIEWER.
+6. Confirme que ele visualiza empresas, mas não possui formulário de criação.
+7. Entre novamente como admin e confira Auditoria.

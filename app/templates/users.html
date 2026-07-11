@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Usuários</h1><p class="muted">Controle quem pode visualizar ou administrar.</p>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+{% if "users.write" in permissions %}
+<form class="form-card" method="post" action="/users">
+<div class="grid">
+<label>Nome<input name="full_name" required></label>
+<label>E-mail<input name="email" type="email" required></label>
+<label>Senha<input name="password" type="password" minlength="10" required></label>
+<label>Perfil<select name="role_id">{% for r in roles %}<option value="{{ r['id'] }}">{{ r["name"] }}</option>{% endfor %}</select></label>
+</div><button>Cadastrar usuário</button>
+</form>
+{% endif %}
+<div class="table-card"><table><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th></tr>
+{% for u in users %}<tr><td>{{ u["full_name"] }}</td><td>{{ u["email"] }}</td><td>{{ u["role_name"] }}</td><td>{{ "Ativo" if u["active"] else "Inativo" }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

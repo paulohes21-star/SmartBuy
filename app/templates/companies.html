@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Empresas</h1><p class="muted">Cadastre as empresas controladas pelo SmartBuy.</p>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+{% if "companies.write" in permissions %}
+<form class="form-card" method="post" action="/companies">
+<div class="grid">
+<label>Código<input name="code" required></label>
+<label>Razão social<input name="legal_name" required></label>
+<label>Nome fantasia<input name="trade_name"></label>
+<label>CNPJ/ID fiscal<input name="tax_id" required></label>
+<label>Cidade<input name="city"></label>
+<label>UF<input name="state" maxlength="2"></label>
+</div><button>Cadastrar empresa</button>
+</form>
+{% endif %}
+<div class="table-card"><table><tr><th>Código</th><th>Razão social</th><th>Fantasia</th><th>CNPJ/ID</th><th>Cidade/UF</th></tr>
+{% for c in companies %}<tr><td>{{ c["code"] }}</td><td>{{ c["legal_name"] }}</td><td>{{ c["trade_name"] or "—" }}</td><td>{{ c["tax_id"] }}</td><td>{{ c["city"] or "—" }}/{{ c["state"] or "—" }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}
