@@ -1,0 +1,14 @@
+{
+  "release": "6.2-enterprise-consolidated",
+  "self_contained": true,
+  "restores_missing_sprint6_sources": true,
+  "idempotent_database": true,
+  "automatic_backup": true,
+  "presentation_ready_scope": [
+    "ERP wizard",
+    "responsive JSON editors",
+    "safe preview",
+    "data quality KPIs",
+    "purchasing intelligence preserved"
+  ]
+}

@@ -1,0 +1,11 @@
+SMARTBUY — SPRINT 6.2 ENTERPRISE CONSOLIDADA
+
+1. Confirme a branch sprint-6-2-enterprise.
+2. Feche o SmartBuy com CTRL+C.
+3. Copie TODO o conteúdo desta pasta para a raiz do SmartBuy.
+4. Execute APLICAR_SPRINT_6_2_CONSOLIDADA.bat.
+5. Inicie o SmartBuy.
+6. Valide /integration-core, /purchasing-intelligence e /docs.
+7. Não faça commit antes da validação.
+
+Esta versão restaura automaticamente os fontes ausentes da Sprint 6 e aplica a interface Enterprise.

@@ -1,0 +1,18 @@
+{
+  "sprint": "6.2 Enterprise",
+  "phase": "A",
+  "incremental": true,
+  "database_migration": false,
+  "backup_automatic": true,
+  "preserves_sprints_1_to_6": true,
+  "features": [
+    "responsive_json_editors",
+    "json_validation",
+    "connector_templates",
+    "entity_mapping_templates",
+    "erp_wizard",
+    "safe_source_preview",
+    "data_quality_summary",
+    "responsive_enterprise_ui"
+  ]
+}

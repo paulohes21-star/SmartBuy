@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Integrações ERP Enterprise" %}
+
+{% block content %}
+<section class="enterprise-hero">
+  <div>
+    <p class="eyebrow">PURCHASING INTELLIGENCE CORE · ENTERPRISE</p>
+    <h1>Central de integração e qualidade de dados</h1>
+    <p class="muted">Configure, teste, visualize e sincronize dados externos com segurança, sem alterar o SmartBuy antes da validação.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="secondary-button" href="/purchasing-intelligence">Inteligência de compras</a>
+    <a class="secondary-button" href="/integration-core/api/decisions/today">API: comprar hoje</a>
+  </div>
+</section>
+
+{% if request.query_params.get("test") == "ok" %}
+<div class="enterprise-alert success">Conexão validada em modo somente leitura.</div>
+{% elif request.query_params.get("test") == "error" %}
+<div class="enterprise-alert danger">Falha no teste. Consulte a mensagem da fonte.</div>
+{% endif %}
+{% if request.query_params.get("sync") == "ok" %}
+<div class="enterprise-alert success">Sincronização concluída em staging.</div>
+{% elif request.query_params.get("sync") == "error" %}
+<div class="enterprise-alert danger">A sincronização falhou. Consulte o histórico.</div>
+{% endif %}
+
+<section class="enterprise-kpis">
+  <article><span>Fontes</span><strong>{{ sources|length }}</strong><small>conexões cadastradas</small></article>
+  <article><span>Mapeamentos</span><strong>{{ mappings|length }}</strong><small>versões disponíveis</small></article>
+  <article><span>Registros válidos</span><strong>{{ run_summary["rows_valid"] or 0 }}</strong><small>prontos para promoção</small></article>
+  <article><span>Inconsistências</span><strong>{{ quality_summary["total_issues"] or 0 }}</strong><small>{{ quality_summary["errors"] or 0 }} erro(s), {{ quality_summary["warnings"] or 0 }} alerta(s)</small></article>
+</section>
+
+{% if "integration.configure" in permissions %}
+<section class="wizard-card" id="integration-wizard">
+  <div class="wizard-heading">
+    <div>
+      <p class="eyebrow">ASSISTENTE DE CONFIGURAÇÃO</p>
+      <h2>Conectar uma nova fonte de dados</h2>
+    </div>
+    <div class="wizard-progress" aria-label="Etapas">
+      <button type="button" class="wizard-step active" data-step-target="1"><span>1</span>Fonte</button>
+      <button type="button" class="wizard-step" data-step-target="2"><span>2</span>Conexão</button>
+      <button type="button" class="wizard-step" data-step-target="3"><span>3</span>Mapeamento</button>
+      <button type="button" class="wizard-step" data-step-target="4"><span>4</span>Prévia</button>
+    </div>
+  </div>
+
+  <div class="wizard-layout">
+    <form id="enterprise-source-form" method="post" action="/integration-core/sources">
+      <div class="wizard-panel active" data-step="1">
+        <div class="panel-title"><span>1</span><div><h3>Identifique a fonte</h3><p>Escolha o conector e o tipo de informação que será importada.</p></div></div>
+        <div class="enterprise-form-grid">
+          <label>Nome da fonte
+            <input name="name" required placeholder="ERP GW — Estoque">
+          </label>
+          <label>Conector
+            <select name="connector_type" id="connector-type">
+              {% for connector in connectors %}
+              <option value="{{ connector['connector_type'] }}">{{ connector["display_name"] }} — v{{ connector["version"] }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Entidade
+            <select name="entity_type" id="entity-type">
+              {% for entity in ["PRODUCT","INVENTORY","CONSUMPTION","PURCHASE","SUPPLIER","OPEN_ORDER"] %}
+              <option value="{{ entity }}">{{ entity }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Prefixo das credenciais
+            <input name="secret_env_prefix" id="secret-prefix" placeholder="GW_ERP">
+            <small>Ex.: GW_ERP_USER e GW_ERP_PASSWORD. A senha não é gravada.</small>
+          </label>
+        </div>
+      </div>
+
+      <div class="wizard-panel" data-step="2">
+        <div class="panel-title"><span>2</span><div><h3>Configure a conexão</h3><p>Use o modelo automático e ajuste apenas os dados da sua fonte.</p></div></div>
+        <div class="json-editor-card">
+          <div class="editor-toolbar">
+            <strong>Configuração JSON</strong>
+            <div>
+              <button type="button" class="mini-button" data-template="config">Aplicar modelo</button>
+              <button type="button" class="mini-button" data-format="config-json">Formatar</button>
+              <button type="button" class="mini-button" data-validate="config-json">Validar</button>
+            </div>
+          </div>
+          <textarea name="config_json" id="config-json" class="json-editor" spellcheck="false">{}</textarea>
+          <div class="editor-status" id="config-json-status">Aguardando validação.</div>
+        </div>
+      </div>
+
+      <div class="wizard-panel" data-step="3">
+        <div class="panel-title"><span>3</span><div><h3>Mapeie os campos</h3><p>A chave representa o campo SmartBuy e o valor representa a coluna do ERP.</p></div></div>
+        <div class="json-editor-card">
+          <div class="editor-toolbar">
+            <strong>Mapeamento JSON</strong>
+            <div>
+              <button type="button" class="mini-button" data-template="mapping">Aplicar modelo</button>
+              <button type="button" class="mini-button" data-format="mapping-json">Formatar</button>
+              <button type="button" class="mini-button" data-validate-mapping>Validar mapeamento</button>
+            </div>
+          </div>
+          <textarea id="mapping-json" class="json-editor tall" spellcheck="false"></textarea>
+          <div class="editor-status" id="mapping-json-status">Aguardando validação.</div>
+        </div>
+      </div>
+
+      <div class="wizard-panel" data-step="4">
+        <div class="panel-title"><span>4</span><div><h3>Teste e visualize</h3><p>Nenhum dado será salvo ou promovido durante esta prévia.</p></div></div>
+        <div class="preview-actions">
+          <button type="button" id="preview-source">Testar conexão e gerar prévia</button>
+          <span id="preview-message" class="muted">A prévia exibirá até cinco registros.</span>
+        </div>
+        <div id="preview-summary" class="preview-summary hidden"></div>
+        <div id="preview-table" class="preview-table hidden"></div>
+      </div>
+
+      <div class="wizard-footer">
+        <button type="button" class="secondary" id="wizard-back" disabled>Voltar</button>
+        <button type="button" id="wizard-next">Próximo</button>
+        <button type="submit" id="save-source" class="hidden">Cadastrar fonte</button>
+      </div>
+    </form>
+
+    <aside class="wizard-aside">
+      <h3>Proteções ativas</h3>
+      <ul>
+        <li>Conexões de banco em modo somente leitura</li>
+        <li>Credenciais mantidas fora do banco</li>
+        <li>Prévia sem promoção de registros</li>
+        <li>Validação de campos obrigatórios</li>
+        <li>Staging antes de atualizar o catálogo</li>
+      </ul>
+      <div class="aside-tip">
+        <strong>Próximo passo</strong>
+        <p>Após cadastrar a fonte, salve o mapeamento versionado e execute a sincronização para staging.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section class="enterprise-two-column">
+  <form class="enterprise-card" method="post" action="/integration-core/mappings">
+    <div class="card-heading">
+      <div><p class="eyebrow">MAPEAMENTO VERSIONADO</p><h2>Salvar mapeamento</h2></div>
+    </div>
+    <label>Fonte
+      <select name="source_id" required>
+        {% for source in sources %}
+        <option value="{{ source['id'] }}">{{ source["name"] }} — {{ source["entity_type"] }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Nome<input name="name" required value="Mapeamento principal"></label>
+    <label>Mapeamento JSON
+      <textarea name="mapping_json" class="json-editor" required>{
+  "product_code": "COD_PRODUTO",
+  "company_code": "COD_EMPRESA",
+  "current_stock": "ESTOQUE_ATUAL"
+}</textarea>
+    </label>
+    <button type="submit">Salvar nova versão</button>
+  </form>
+
+  <div class="enterprise-card quality-overview">
+    <div class="card-heading"><div><p class="eyebrow">DATA QUALITY</p><h2>Saúde dos dados</h2></div></div>
+    {% set total = (run_summary["rows_valid"] or 0) + (run_summary["rows_invalid"] or 0) %}
+    {% set quality_rate = ((run_summary["rows_valid"] or 0) * 100 / total) if total else 100 %}
+    <div class="quality-score">
+      <strong>{{ "%.0f"|format(quality_rate) }}%</strong>
+      <span>índice de qualidade</span>
+    </div>
+    <div class="quality-bar"><span style="width: {{ quality_rate }}%"></span></div>
+    <div class="quality-list">
+      <div><span>Registros lidos</span><strong>{{ run_summary["rows_read"] or 0 }}</strong></div>
+      <div><span>Válidos</span><strong>{{ run_summary["rows_valid"] or 0 }}</strong></div>
+      <div><span>Inválidos</span><strong>{{ run_summary["rows_invalid"] or 0 }}</strong></div>
+      <div><span>Promovidos</span><strong>{{ run_summary["rows_promoted"] or 0 }}</strong></div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="enterprise-card table-shell">
+  <div class="card-heading"><div><p class="eyebrow">FONTES</p><h2>Conexões cadastradas</h2></div></div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Fonte</th><th>Conector</th><th>Entidade</th><th>Credencial</th><th>Último teste</th><th>Mapeamentos</th><th>Ação</th></tr></thead>
+      <tbody>
+      {% for source in sources %}
+      <tr>
+        <td><strong>{{ source["name"] }}</strong></td>
+        <td>{{ source["connector_type"] }} v{{ source["connector_version"] }}</td>
+        <td><span class="status-pill neutral">{{ source["entity_type"] }}</span></td>
+        <td>{{ source["secret_env_prefix"] or "Não necessária" }}</td>
+        <td>
+          <span class="status-pill {{ 'success' if source['last_test_status']=='OK' else 'danger' if source['last_test_status']=='ERROR' else 'neutral' }}">{{ source["last_test_status"] or "Não testado" }}</span>
+          {% if source["last_test_message"] %}<small class="table-note">{{ source["last_test_message"] }}</small>{% endif %}
+        </td>
+        <td>{{ source["mapping_count"] }}</td>
+        <td>
+          {% if "integration.configure" in permissions %}
+          <form method="post" action="/integration-core/sources/{{ source['id'] }}/test"><button type="submit" class="secondary">Testar</button></form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="7">Nenhuma fonte cadastrada.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% if "integration.execute" in permissions %}
+<form class="enterprise-card" method="post" action="/integration-core/sync">
+  <div class="card-heading"><div><p class="eyebrow">STAGING</p><h2>Executar sincronização</h2></div></div>
+  <div class="enterprise-form-grid three">
+    <label>Fonte<select name="source_id" required>{% for source in sources %}<option value="{{ source['id'] }}">{{ source["name"] }}</option>{% endfor %}</select></label>
+    <label>Mapeamento<select name="mapping_id" required>{% for mapping in mappings %}<option value="{{ mapping['id'] }}">{{ mapping["source_name"] }} — {{ mapping["name"] }} v{{ mapping["version"] }}</option>{% endfor %}</select></label>
+    <label>Modo<select name="mode"><option value="INCREMENTAL">Incremental</option><option value="FULL">Completa</option></select></label>
+  </div>
+  <button type="submit">Ler, mapear e validar</button>
+</form>
+{% endif %}
+
+<section class="enterprise-card table-shell">
+  <div class="card-heading"><div><p class="eyebrow">HISTÓRICO</p><h2>Execuções</h2></div></div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>ID</th><th>Fonte</th><th>Status</th><th>Duração</th><th>Lidas</th><th>Válidas</th><th>Inválidas</th><th>Promovidas</th><th>Erro</th><th>Ação</th></tr></thead>
+      <tbody>
+      {% for run in runs %}
+      <tr>
+        <td>#{{ run["id"] }}</td><td>{{ run["source_name"] }}</td>
+        <td><span class="status-pill {{ 'success' if run['status'] in ['COMPLETED','PROMOTED','STAGED'] else 'warning' if run['status']=='PARTIAL' else 'danger' }}">{{ run["status"] }}</span></td>
+        <td>{{ run["duration_ms"] or 0 }} ms</td><td>{{ run["rows_read"] }}</td><td>{{ run["rows_valid"] }}</td><td>{{ run["rows_invalid"] }}</td><td>{{ run["rows_promoted"] }}</td>
+        <td><small>{{ run["error_message"] or "—" }}</small></td>
+        <td>{% if run["status"] in ["STAGED","PARTIAL"] and "integration.promote" in permissions %}<form method="post" action="/integration-core/runs/{{ run['id'] }}/promote"><button type="submit">Promover válidos</button></form>{% endif %}</td>
+      </tr>
+      {% else %}<tr><td colspan="10">Nenhuma execução realizada.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="enterprise-card table-shell">
+  <div class="card-heading"><div><p class="eyebrow">QUALIDADE</p><h2>Inconsistências recentes</h2></div></div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Execução</th><th>Chave</th><th>Severidade</th><th>Regra</th><th>Campo</th><th>Mensagem</th></tr></thead>
+      <tbody>
+      {% for issue in issues %}
+      <tr><td>#{{ issue["run_id"] }}</td><td>{{ issue["source_key"] or "—" }}</td><td><span class="status-pill {{ 'danger' if issue['severity']=='ERROR' else 'warning' }}">{{ issue["severity"] }}</span></td><td>{{ issue["rule_code"] }}</td><td>{{ issue["field_name"] or "—" }}</td><td>{{ issue["message"] }}</td></tr>
+      {% else %}<tr><td colspan="6">Nenhuma inconsistência registrada.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+window.SMARTBUY_CONNECTOR_TEMPLATES = {{ connector_templates|tojson }};
+window.SMARTBUY_MAPPING_TEMPLATES = {{ mapping_templates|tojson }};
+</script>
+<script src="/static/sprint6_enterprise.js"></script>
+{% endblock %}
