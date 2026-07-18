@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Solicitações de cotação" %}
+
+{% block content %}
+<section class="rfq-enterprise-header">
+  <div>
+    <p class="eyebrow">AÇÃO OPERACIONAL DE COMPRAS</p>
+    <h1>Solicitações de cotação por fornecedor</h1>
+    <p class="muted">Itens recomendados pelo SmartBuy, agrupados automaticamente por empresa e fornecedor.</p>
+  </div>
+  <a class="secondary-button" href="/purchasing-intelligence">Voltar à inteligência de compras</a>
+</section>
+
+<section class="rfq-enterprise-kpis">
+  <article class="rfq-kpi"><span class="rfq-kpi-icon">▣</span><div><small>Solicitações</small><strong>{{ total_requests }}</strong><em>Total geradas</em></div></article>
+  <article class="rfq-kpi"><span class="rfq-kpi-icon">☷</span><div><small>Itens para cotar</small><strong>{{ total_items }}</strong><em>Produtos distintos</em></div></article>
+  <article class="rfq-kpi"><span class="rfq-kpi-icon">R$</span><div><small>Valor estimado total</small><strong>R$ {{ "%.2f"|format(total_estimated) }}</strong><em>Valor de referência</em></div></article>
+  <article class="rfq-kpi"><span class="rfq-kpi-icon">✓</span><div><small>Status geral</small><strong>Prontas para envio</strong><em>Todas as solicitações</em></div></article>
+</section>
+
+<div class="rfq-enterprise-layout">
+  <main class="rfq-enterprise-list">
+    {% for rfq in rfqs %}
+    <section class="rfq-supplier-card" id="rfq-{{ loop.index }}">
+      <header class="rfq-supplier-header">
+        <div class="rfq-supplier-identity">
+          <div class="rfq-supplier-logo">{{ rfq.supplier.name[:2]|upper }}</div>
+          <div>
+            <div class="rfq-supplier-title-line">
+              <h2>{{ rfq.supplier.name }}</h2>
+              <span class="rfq-status-badge ready">Pronta para envio</span>
+            </div>
+            <p><strong>Solicitação:</strong> {{ rfq.request_number }}</p>
+            <p>{{ rfq.company.code }} — {{ rfq.company.name }}{% if rfq.company.tax_id %} · CNPJ {{ rfq.company.tax_id }}{% endif %}</p>
+            <p><strong>E-mail:</strong> {{ rfq.supplier.email or "Não cadastrado" }} &nbsp; · &nbsp; <strong>WhatsApp:</strong> {{ rfq.supplier.phone or "Não cadastrado" }}</p>
+          </div>
+        </div>
+        <div class="rfq-supplier-metrics">
+          <div><small>Valor estimado</small><strong>R$ {{ "%.2f"|format(rfq.estimated_value) }}</strong></div>
+          <div><small>Itens</small><strong>{{ rfq['items']|length }}</strong></div>
+          <div><small>Validade da proposta</small><strong>{{ rfq.valid_until_br }}</strong></div>
+        </div>
+      </header>
+
+      <div class="table-scroll">
+        <table class="rfq-enterprise-table">
+          <thead>
+            <tr><th>Produto</th><th>Código</th><th>Quantidade</th><th>Cobertura atual</th><th>Ruptura prevista</th><th>Referência estimada</th><th>Prioridade</th></tr>
+          </thead>
+          <tbody>
+            {% for item in rfq['items'] %}
+            <tr>
+              <td>{{ item.description }}</td>
+              <td><strong class="rfq-code">{{ item.internal_code }}</strong></td>
+              <td><strong>{{ item.quantity }} UN</strong></td>
+              <td>{{ item.days_of_cover ~ " dias" if item.days_of_cover is not none else "Sem consumo" }}</td>
+              <td><strong class="rfq-rupture-date">{{ item.rupture_date_br }}</strong></td>
+              <td>R$ {{ "%.2f"|format(item.unit_cost) }}</td>
+              <td><span class="rfq-priority {{ 'high' if item.priority == 'Alta prioridade' else 'medium' }}">{{ item.priority }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rfq-card-footer">
+        <section class="rfq-requirements-enterprise">
+          <strong>Solicitamos informar na proposta:</strong>
+          <div class="rfq-requirement-grid">
+            <span>✓ Preço unitário</span><span>✓ Frete</span><span>✓ Validade da proposta</span>
+            <span>✓ IPI</span><span>✓ Prazo de entrega</span><span>✓ Garantia</span>
+            <span>✓ ICMS</span><span>✓ Condição de pagamento</span>
+          </div>
+        </section>
+
+        <div class="rfq-enterprise-actions">
+          <div class="rfq-send-menu">
+            <button type="button" class="rfq-send-button" onclick="toggleRfqMenu('menu-{{ loop.index }}')">Enviar cotação ▾</button>
+            <div class="rfq-send-dropdown" id="menu-{{ loop.index }}">
+              <a href="{{ rfq.whatsapp_url }}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>
+              <a href="{{ rfq.email_url }}">Enviar por e-mail</a>
+              <button type="button" onclick="copyRfqMessage('message-{{ loop.index }}', this)">Copiar mensagem</button>
+              <a href="/purchasing-intelligence/rfq/pdf/{{ rfq.request_number }}?{% if selected_company_id %}company_id={{ selected_company_id }}&{% endif %}analysis_months={{ selected_analysis_months }}" target="_blank" rel="noopener">Gerar PDF</a>
+            </div>
+          </div>
+          <button type="button" class="secondary" onclick="copyRfqMessage('message-{{ loop.index }}', this)">Copiar</button>
+          <a class="rfq-pdf-button" href="/purchasing-intelligence/rfq/pdf/{{ rfq.request_number }}?{% if selected_company_id %}company_id={{ selected_company_id }}&{% endif %}analysis_months={{ selected_analysis_months }}" target="_blank" rel="noopener">PDF</a>
+        </div>
+      </div>
+
+      <textarea class="rfq-hidden-message" id="message-{{ loop.index }}" readonly>{{ rfq.message }}</textarea>
+    </section>
+    {% else %}
+    <section class="empty-rfq"><h2>Nenhuma solicitação necessária</h2><p>Não existem produtos com quantidade sugerida maior que zero nos filtros atuais.</p></section>
+    {% endfor %}
+  </main>
+
+  <aside class="rfq-enterprise-sidebar">
+    <section class="rfq-side-card">
+      <h3>Resumo das solicitações</h3>
+      <div class="rfq-donut"><strong>{{ total_requests }}</strong><span>Solicitações</span></div>
+      <div class="rfq-legend">
+        <p><span class="dot ready"></span>Prontas para envio <strong>{{ total_requests }}</strong></p>
+        <p><span class="dot waiting"></span>Aguardando envio <strong>0</strong></p>
+        <p><span class="dot late"></span>Atrasadas <strong>0</strong></p>
+      </div>
+    </section>
+    <section class="rfq-side-card">
+      <h3>Dicas SmartBuy</h3>
+      <div class="rfq-tip"><strong>Envie cotações pelo WhatsApp</strong><p>Aumente a velocidade de resposta dos fornecedores.</p></div>
+      <div class="rfq-tip"><strong>Compare propostas</strong><p>Registre e compare preços, prazos, impostos e fretes.</p></div>
+      <div class="rfq-tip"><strong>Aprove compras</strong><p>Escolha a melhor proposta e avance para o pedido de compra.</p></div>
+    </section>
+  </aside>
+</div>
+
+<script>
+function toggleRfqMenu(id) {
+  document.querySelectorAll(".rfq-send-dropdown.open").forEach((menu) => {
+    if (menu.id !== id) menu.classList.remove("open");
+  });
+  document.getElementById(id).classList.toggle("open");
+}
+document.addEventListener("click", function(event) {
+  if (!event.target.closest(".rfq-send-menu")) {
+    document.querySelectorAll(".rfq-send-dropdown.open").forEach((menu) => menu.classList.remove("open"));
+  }
+});
+async function copyRfqMessage(id, button) {
+  const field = document.getElementById(id);
+  await navigator.clipboard.writeText(field.value);
+  const original = button.textContent;
+  button.textContent = "Copiado";
+  setTimeout(() => button.textContent = original, 1600);
+}
+</script>
+{% endblock %}

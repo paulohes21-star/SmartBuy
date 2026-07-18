@@ -1,0 +1,38 @@
+SMARTBUY — IDENTIFICAÇÃO DOS SKUs RETIRADOS
+
+O QUE MUDA
+Ao clicar em “Retirar SKU”, o alerta superior passa a mostrar:
+- código do produto;
+- descrição do produto;
+- fornecedor.
+
+O botão “Restaurar todos” continua funcionando normalmente.
+
+NÃO ALTERA
+- backend;
+- banco de dados;
+- regras da cotação;
+- PDF;
+- e-mail;
+- WhatsApp;
+- cálculo dos valores.
+
+COMO APLICAR — MANUAL
+1. Faça backup do arquivo atual:
+   app\templates\quotation_requests.html
+   ou
+   templates\quotation_requests.html
+
+2. Substitua pelo arquivo presente na pasta templates deste pacote.
+
+3. Reinicie o SmartBuy.
+
+4. No navegador, pressione Ctrl + F5.
+
+TESTE
+1. Abra Inteligência de Compras.
+2. Clique em Gerar cotações.
+3. Retire um SKU.
+4. No alerta superior deverá aparecer o código e a descrição do produto retirado.
+5. Retire outro SKU para verificar a lista.
+6. Clique em Restaurar todos.

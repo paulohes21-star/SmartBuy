@@ -1,0 +1,30 @@
+.rfq-pdf-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 36px;
+  box-sizing: border-box;
+  padding: 8px 14px !important;
+  border: 1px solid rgba(255, 87, 77, 0.72) !important;
+  border-radius: 9px;
+  background: rgba(255, 75, 67, 0.055) !important;
+  color: #ff7169 !important;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none !important;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rfq-pdf-button:hover {
+  transform: translateY(-1px);
+  border-color: #ff7169 !important;
+  background: rgba(255, 75, 67, 0.12) !important;
+  box-shadow: 0 8px 20px rgba(255, 75, 67, 0.10);
+}
+.sprint5-filter button[type="submit"].is-loading {
+  min-width: 110px;
+  opacity: 0.84;
+  cursor: wait;
+}

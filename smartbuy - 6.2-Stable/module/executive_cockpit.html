@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Executive Cockpit" %}
+
+{% block content %}
+<section class="xec-page">
+  <header class="xec-hero">
+    <div>
+      <p class="eyebrow">SMARTBUY EXECUTIVE COCKPIT 6.7</p>
+      <h1>Visão executiva de compras e estoque</h1>
+      <p>Uma única tela para enxergar economia, capital parado, risco e as decisões que merecem atenção hoje.</p>
+    </div>
+    <a href="/transfer-intelligence" class="xec-primary-link">Abrir Centro de Oportunidades →</a>
+  </header>
+
+  <section class="xec-kpis">
+    <article class="saving">
+      <span>ECONOMIA POTENCIAL</span>
+      <strong>{{ transfer_metrics.money_total_avoided }}</strong>
+      <small>compras externas evitáveis</small>
+    </article>
+    <article class="idle">
+      <span>CAPITAL PARADO</span>
+      <strong>{{ transfer_metrics.money_idle_capital }}</strong>
+      <small>estoque acima da cobertura</small>
+    </article>
+    <article class="critical">
+      <span>PRODUTOS CRÍTICOS</span>
+      <strong>{{ inventory.critical_products }}</strong>
+      <small>itens abaixo do mínimo</small>
+    </article>
+    <article class="inventory">
+      <span>ESTOQUE TOTAL</span>
+      <strong>{{ inventory.money_inventory_value }}</strong>
+      <small>{{ inventory.products }} produtos monitorados</small>
+    </article>
+  </section>
+
+  <section class="xec-grid">
+    <article class="xec-ai">
+      <header>
+        <div>
+          <p class="eyebrow">RESUMO EXECUTIVO</p>
+          <h2>O que merece atenção hoje</h2>
+        </div>
+        <span>IA EXECUTIVA</span>
+      </header>
+      <p>{{ executive_summary }}</p>
+      <footer>
+        <a href="/transfer-intelligence">Revisar oportunidades</a>
+        <a href="/purchasing-intelligence">Revisar compras</a>
+      </footer>
+    </article>
+
+    <article class="xec-health">
+      <header>
+        <p class="eyebrow">SAÚDE OPERACIONAL</p>
+        <h2>Visão das empresas</h2>
+      </header>
+      <div class="xec-health-summary">
+        <div>
+          <small>Melhor desempenho</small>
+          <strong>{{ best_company.company_name if best_company else "Sem dados" }}</strong>
+          <span>{{ best_company.health if best_company else 0 }}% de saúde</span>
+        </div>
+        <div>
+          <small>Maior atenção</small>
+          <strong>{{ attention_company.company_name if attention_company else "Sem dados" }}</strong>
+          <span>{{ attention_company.health if attention_company else 0 }}% de saúde</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="xec-opportunities">
+    <header>
+      <div>
+        <p class="eyebrow">RANKING FINANCEIRO</p>
+        <h2>Principais oportunidades</h2>
+      </div>
+      <a href="/transfer-intelligence">Ver todas</a>
+    </header>
+    <div class="xec-opportunity-list">
+      {% for item in top_opportunities %}
+      <article>
+        <span class="rank">#{{ loop.index }}</span>
+        <div>
+          <strong>{{ item.internal_code }} — {{ item.description }}</strong>
+          <small>{{ item.origin_company }} → {{ item.destination_company }}</small>
+        </div>
+        <div class="quantity">
+          <small>TRANSFERIR</small>
+          <strong>{{ item.quantity }} UN</strong>
+        </div>
+        <div class="value">
+          <small>ECONOMIA</small>
+          <strong>{{ money(item.avoided_purchase) }}</strong>
+        </div>
+        <span class="score">{{ item.score }}/100</span>
+      </article>
+      {% else %}
+      <div class="xec-empty">Nenhuma oportunidade segura identificada.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="xec-companies">
+    <header>
+      <div>
+        <p class="eyebrow">MAPA DE SAÚDE</p>
+        <h2>Empresas e filiais</h2>
+      </div>
+    </header>
+    <div class="xec-company-grid">
+      {% for company in companies %}
+      <article class="{{ company.status }}">
+        <div class="xec-company-head">
+          <span>{{ company.code }}</span>
+          <i></i>
+        </div>
+        <strong>{{ company.company_name }}</strong>
+        <div class="xec-company-score">
+          <b>{{ company.health }}%</b>
+          <small>saúde do estoque</small>
+        </div>
+        <div class="xec-company-details">
+          <span>{{ company.critical_products }} crítico(s)</span>
+          <span>{{ company.money_idle_capital }} parado</span>
+        </div>
+        <div class="xec-progress"><span style="width:{{ company.health }}%"></span></div>
+      </article>
+      {% else %}
+      <div class="xec-empty">Nenhuma empresa disponível.</div>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+{% endblock %}

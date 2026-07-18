@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Transfer Intelligence Executive" %}
+
+{% block content %}
+<section class="tie-page">
+  <header class="tie-command">
+    <div class="tie-command-copy">
+      <p class="eyebrow">SMARTBUY TRANSFER INTELLIGENCE 6.6.2</p>
+      <div class="tie-title-line">
+        <div>
+          <h1>Centro de Oportunidades</h1>
+          <p>Decisões priorizadas pelo impacto financeiro: use estoque interno, evite compras e reduza capital imobilizado.</p>
+        </div>
+      </div>
+    </div>
+    <div class="tie-command-money">
+      <span>VOCÊ NÃO PRECISA COMPRAR</span>
+      <strong>{{ metrics.money_total_avoided }}</strong>
+      <small>economia potencial identificada agora</small>
+    </div>
+  </header>
+
+  <section class="tie-executive-strip">
+    <article><small>Economia potencial</small><strong>{{ metrics.money_total_avoided }}</strong><span>compra externa evitável</span></article>
+    <article><small>Capital imobilizado</small><strong>{{ metrics.money_idle_capital }}</strong><span>dinheiro acima da cobertura</span></article>
+    <article><small>Saúde do estoque</small><strong>{{ metrics.health_score }}%</strong><span>equilíbrio entre excesso e risco</span></article>
+    <article><small>Oportunidades</small><strong>{{ metrics.recommendations }}</strong><span>{{ metrics.products }} produto(s) analisado(s)</span></article>
+  </section>
+
+  <div class="tie-toolbar">
+    <nav class="tie-tabs">
+      <a href="/purchasing-intelligence">Recomendações de Compra</a>
+      <a class="active" href="/transfer-intelligence">Transferências Inteligentes</a>
+    </nav>
+
+    <form class="tie-filter" method="get">
+      <label>Empresa
+        <select name="company_id">
+          <option value="">Todas</option>
+          {% for company in companies %}
+          <option value="{{ company.id }}" {{ "selected" if selected_company_id == company.id else "" }}>
+            {{ company.code }} — {{ company.trade_name or company.legal_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Histórico
+        <select name="analysis_months">
+          {% for value in [1, 3, 6, 12] %}
+          <option value="{{ value }}" {{ "selected" if selected_analysis_months == value else "" }}>{{ value }} mês(es)</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Crítico<input type="number" name="critical_days" min="1" value="{{ selected_critical_days }}"><small>dias</small></label>
+      <label>Alvo<input type="number" name="target_days" min="1" value="{{ selected_target_days }}"><small>dias</small></label>
+      <label>Excesso<input type="number" name="excess_days" min="1" value="{{ selected_excess_days }}"><small>dias</small></label>
+      <button type="submit">Recalcular</button>
+    </form>
+  </div>
+
+  <section class="tie-opportunity-header">
+    <div>
+      <p class="eyebrow">FILA DE DINHEIRO ESPERANDO DECISÃO</p>
+      <h2>Oportunidades priorizadas</h2>
+    </div>
+    <div class="tie-summary-badges">
+      <span>{{ metrics.qty_total_units }} UN redistribuíveis</span>
+      <span>{{ metrics.critical_count }} crítica(s)</span>
+    </div>
+  </section>
+
+  {% for item in recommendations %}
+  <article class="tie-card">
+    <aside class="tie-rank">
+      <span>#{{ loop.index }}</span>
+      <small>impacto</small>
+    </aside>
+
+    <div class="tie-card-main">
+      <header class="tie-card-head">
+        <div>
+          <div class="tie-card-tags">
+            <span class="tie-priority {{ item.priority|lower }}">{{ item.priority }}</span>
+            <span>Transferência</span>
+            <span>Compra evitada</span>
+          </div>
+          <h3>{{ item.internal_code }} — {{ item.description }}</h3>
+        </div>
+        <div class="tie-score">
+          <strong>{{ item.score }}</strong><small>/100</small><span>Excelente</span>
+        </div>
+      </header>
+
+      <section class="tie-route">
+        <div class="tie-location origin">
+          <span>ORIGEM</span>
+          <strong>{{ item.origin_company }}</strong>
+          <b>{{ qty(item.origin_stock) }} UN</b>
+          <small>{% if item.origin_coverage_days is not none %}{{ "%.0f"|format(item.origin_coverage_days) }} dias de cobertura{% else %}sem consumo recente{% endif %}</small>
+          <em>Após: {{ qty(item.origin_after_stock) }} UN</em>
+        </div>
+
+        <div class="tie-transfer-line">
+          <span>{{ qty(item.quantity) }} UN</span>
+          <div><i></i><b>➜</b></div>
+          <small>estoque deslocado</small>
+        </div>
+
+        <div class="tie-location destination">
+          <span>DESTINO</span>
+          <strong>{{ item.destination_company }}</strong>
+          <b>{{ qty(item.destination_stock) }} UN</b>
+          <small>{% if item.destination_coverage_days is not none %}{{ "%.0f"|format(item.destination_coverage_days) }} dias de cobertura{% else %}sem histórico{% endif %}</small>
+          <em>Após: {{ qty(item.destination_after_stock) }} UN</em>
+        </div>
+      </section>
+
+      <section class="tie-decision">
+        <div class="tie-reason">
+          <p class="eyebrow">DECISÃO RECOMENDADA</p>
+          <h4>Transferir {{ qty(item.quantity) }} unidades antes de comprar.</h4>
+          <p>{{ item.explanation }}</p>
+        </div>
+
+        <div class="tie-finance">
+          <span>COMPRA EVITADA</span>
+          <strong>{{ money(item.avoided_purchase) }}</strong>
+          <small>capital preservado</small>
+        </div>
+      </section>
+
+      <section class="tie-compare">
+        <article class="buy">
+          <span>COMPRAR</span>
+          <strong>{{ money(item.avoided_purchase) }}</strong>
+          <small>novo desembolso</small>
+        </article>
+        <div class="tie-versus">VS</div>
+        <article class="transfer">
+          <span>TRANSFERIR</span>
+          <strong>R$ 0,00</strong>
+          <small>estoque próprio</small>
+        </article>
+        <article class="saving">
+          <span>ECONOMIA</span>
+          <strong>{{ money(item.avoided_purchase) }}</strong>
+          <small>decisão SmartBuy</small>
+        </article>
+      </section>
+
+      <section class="tie-timeline">
+        <div class="done"><i>✓</i><span>Excesso encontrado</span></div>
+        <div class="done"><i>✓</i><span>Ruptura encontrada</span></div>
+        <div class="active"><i>3</i><span>Transferência sugerida</span></div>
+        <div><i>4</i><span>Compra evitada</span></div>
+        <div><i>5</i><span>Economia registrada</span></div>
+      </section>
+    </div>
+  </article>
+  {% else %}
+  <section class="tie-empty">
+    <strong>Nenhuma oportunidade segura encontrada.</strong>
+    <span>O estoque pode estar equilibrado ou ainda sem histórico suficiente.</span>
+  </section>
+  {% endfor %}
+</section>
+{% endblock %}

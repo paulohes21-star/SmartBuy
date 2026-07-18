@@ -1,0 +1,21 @@
+{
+  "name": "SmartBuy Transfer Intelligence",
+  "version": "6.6.0",
+  "route": "/transfer-intelligence",
+  "database_migrations": false,
+  "permissions_reused": [
+    "purchasing_intelligence.read"
+  ],
+  "files": [
+    "app/transfer_intelligence.py",
+    "app/templates/transfer_intelligence.html",
+    "app/static/transfer_intelligence.css"
+  ],
+  "features": [
+    "cross-company stock analysis",
+    "transfer recommendations",
+    "origin safety protection",
+    "avoided purchase estimate",
+    "decision score"
+  ]
+}

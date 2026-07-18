@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Transfer Intelligence Premium" %}
+
+{% block content %}
+<section class="tip-page">
+  <header class="tip-hero">
+    <div class="tip-hero-copy">
+      <p class="eyebrow">SMARTBUY TRANSFER INTELLIGENCE 6.6.1</p>
+      <h1>Transferir antes de comprar</h1>
+      <p>O SmartBuy transforma estoque parado em disponibilidade, reduz risco de ruptura e mostra, em dinheiro, quanto cada decisão pode economizar.</p>
+      <div class="tip-status">
+        <span><i></i> Motor ativo</span>
+        <span>Proteção da origem</span>
+        <span>Decisão financeira</span>
+      </div>
+    </div>
+    <div class="tip-hero-value">
+      <small>Economia potencial identificada</small>
+      <strong>{{ metrics.money_total_avoided }}</strong>
+      <span>usando estoque interno antes de comprar</span>
+    </div>
+  </header>
+
+  <nav class="tip-tabs">
+    <a href="/purchasing-intelligence">Recomendações de Compra</a>
+    <a class="active" href="/transfer-intelligence">Transferências Inteligentes</a>
+  </nav>
+
+  <form class="tip-filter" method="get">
+    <label>Empresa
+      <select name="company_id">
+        <option value="">Todas as empresas</option>
+        {% for company in companies %}
+        <option value="{{ company.id }}" {{ "selected" if selected_company_id == company.id else "" }}>
+          {{ company.code }} — {{ company.trade_name or company.legal_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Histórico
+      <select name="analysis_months">
+        {% for value in [1, 3, 6, 12] %}
+        <option value="{{ value }}" {{ "selected" if selected_analysis_months == value else "" }}>{{ value }} mês(es)</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Crítico até<input type="number" name="critical_days" min="1" value="{{ selected_critical_days }}"><small>dias</small></label>
+    <label>Destino após transferência<input type="number" name="target_days" min="1" value="{{ selected_target_days }}"><small>dias</small></label>
+    <label>Excesso acima de<input type="number" name="excess_days" min="1" value="{{ selected_excess_days }}"><small>dias</small></label>
+    <button type="submit">Recalcular inteligência</button>
+  </form>
+
+  <section class="tip-kpis">
+    <article class="green"><em>⇄</em><div><small>Transferências sugeridas</small><strong>{{ metrics.recommendations }}</strong><span>{{ metrics.products }} produto(s)</span></div></article>
+    <article class="blue"><em>▣</em><div><small>Unidades redistribuídas</small><strong>{{ metrics.qty_total_units }}</strong><span>estoque interno aproveitado</span></div></article>
+    <article class="gold"><em>R$</em><div><small>Dinheiro dormindo</small><strong>{{ metrics.money_idle_capital }}</strong><span>capital acima da cobertura</span></div></article>
+    <article class="violet"><em>♥</em><div><small>Saúde do estoque</small><strong>{{ metrics.health_score }}%</strong><span>equilíbrio entre risco e excesso</span></div></article>
+  </section>
+
+  {% for item in recommendations %}
+  <article class="tip-opportunity">
+    <header class="tip-opportunity-head">
+      <div>
+        <span class="tip-priority {{ item.priority|lower }}">{{ item.priority }}</span>
+        <p class="eyebrow">OPORTUNIDADE #{{ loop.index }}</p>
+        <h2>{{ item.internal_code }} — {{ item.description }}</h2>
+      </div>
+      <div class="tip-score" style="--score:{{ item.score }}">
+        <div><strong>{{ item.score }}</strong><small>/100</small></div>
+        <span>Score da decisão</span>
+      </div>
+    </header>
+
+    <section class="tip-flow">
+      <div class="tip-node origin">
+        <span>ORIGEM COM EXCESSO</span>
+        <strong>{{ item.origin_company }}</strong>
+        <b>{{ qty(item.origin_stock) }} UN</b>
+        <small>{% if item.origin_coverage_days is not none %}{{ "%.0f"|format(item.origin_coverage_days) }} dias de cobertura{% else %}sem consumo recente{% endif %}</small>
+      </div>
+      <div class="tip-arrow">
+        <span>{{ qty(item.quantity) }} UN</span>
+        <i>→</i>
+        <small>transferência recomendada</small>
+      </div>
+      <div class="tip-node destination">
+        <span>DESTINO EM RISCO</span>
+        <strong>{{ item.destination_company }}</strong>
+        <b>{{ qty(item.destination_stock) }} UN</b>
+        <small>{% if item.destination_coverage_days is not none %}{{ "%.0f"|format(item.destination_coverage_days) }} dias de cobertura{% else %}sem histórico{% endif %}</small>
+      </div>
+    </section>
+
+    <section class="tip-impact">
+      <div class="tip-executive-summary">
+        <p class="eyebrow">RESUMO EXECUTIVO</p>
+        <h3>O SmartBuy recomenda transferir {{ qty(item.quantity) }} unidades.</h3>
+        <p>{{ item.explanation }}</p>
+      </div>
+      <div class="tip-saving">
+        <small>COMPRA EVITADA</small>
+        <strong>{{ money(item.avoided_purchase) }}</strong>
+        <span>Economia estimada com estoque próprio</span>
+        <button type="button" class="tip-simulate"
+          data-origin="{{ item.origin_company }}"
+          data-destination="{{ item.destination_company }}"
+          data-quantity="{{ qty(item.quantity) }}"
+          data-saving="{{ money(item.avoided_purchase) }}"
+          data-origin-before="{{ qty(item.origin_stock) }}"
+          data-origin-after="{{ qty(item.origin_after_stock) }}"
+          data-destination-before="{{ qty(item.destination_stock) }}"
+          data-destination-after="{{ qty(item.destination_after_stock) }}">
+          Simular decisão
+        </button>
+      </div>
+    </section>
+
+    <section class="tip-before-after">
+      <div><small>Origem antes</small><strong>{{ qty(item.origin_stock) }} UN</strong></div>
+      <i>→</i>
+      <div><small>Origem depois</small><strong>{{ qty(item.origin_after_stock) }} UN</strong></div>
+      <div><small>Destino antes</small><strong>{{ qty(item.destination_stock) }} UN</strong></div>
+      <i>→</i>
+      <div><small>Destino depois</small><strong>{{ qty(item.destination_after_stock) }} UN</strong></div>
+    </section>
+
+    <section class="tip-timeline">
+      <div class="done"><i>1</i><strong>Detecção</strong><span>excesso e risco encontrados</span></div>
+      <div class="done"><i>2</i><strong>Análise</strong><span>origem protegida</span></div>
+      <div class="active"><i>3</i><strong>Transferência</strong><span>{{ qty(item.quantity) }} unidades</span></div>
+      <div><i>4</i><strong>Compra evitada</strong><span>{{ money(item.avoided_purchase) }}</span></div>
+      <div><i>5</i><strong>Economia</strong><span>impacto registrado</span></div>
+    </section>
+  </article>
+  {% else %}
+  <section class="tip-empty"><strong>Nenhuma transferência segura encontrada.</strong><span>O estoque pode estar equilibrado ou ainda sem histórico suficiente.</span></section>
+  {% endfor %}
+</section>
+
+<div class="tip-modal" id="tip-modal" hidden>
+  <div class="tip-modal-backdrop" data-tip-close></div>
+  <section class="tip-modal-card" role="dialog" aria-modal="true">
+    <button class="tip-modal-close" type="button" data-tip-close>×</button>
+    <p class="eyebrow">SIMULADOR FINANCEIRO</p>
+    <h2>Comparação da decisão</h2>
+    <p id="tip-modal-route"></p>
+    <div class="tip-simulation-grid">
+      <article class="buy"><small>COMPRAR</small><strong id="tip-buy-value"></strong><span>novo desembolso financeiro</span></article>
+      <article class="transfer"><small>TRANSFERIR</small><strong>R$ 0,00</strong><span>uso de estoque interno</span></article>
+      <article class="economy"><small>ECONOMIA</small><strong id="tip-economy-value"></strong><span>capital preservado</span></article>
+    </div>
+    <div class="tip-simulation-stocks">
+      <div><small>Origem</small><strong id="tip-origin-stock"></strong></div>
+      <div><small>Destino</small><strong id="tip-destination-stock"></strong></div>
+    </div>
+    <div class="tip-modal-conclusion">Decisão recomendada: <strong>transferir antes de comprar.</strong></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const modal = document.getElementById("tip-modal");
+  if (!modal) return;
+  document.addEventListener("click", event => {
+    const trigger = event.target.closest(".tip-simulate");
+    if (trigger) {
+      document.getElementById("tip-modal-route").textContent =
+        `${trigger.dataset.quantity} UN de ${trigger.dataset.origin} para ${trigger.dataset.destination}`;
+      document.getElementById("tip-buy-value").textContent = trigger.dataset.saving;
+      document.getElementById("tip-economy-value").textContent = trigger.dataset.saving;
+      document.getElementById("tip-origin-stock").textContent =
+        `${trigger.dataset.originBefore} → ${trigger.dataset.originAfter} UN`;
+      document.getElementById("tip-destination-stock").textContent =
+        `${trigger.dataset.destinationBefore} → ${trigger.dataset.destinationAfter} UN`;
+      modal.hidden = false;
+      document.body.classList.add("tip-modal-open");
+    }
+    if (event.target.closest("[data-tip-close]")) {
+      modal.hidden = true;
+      document.body.classList.remove("tip-modal-open");
+    }
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !modal.hidden) {
+      modal.hidden = true;
+      document.body.classList.remove("tip-modal-open");
+    }
+  });
+})();
+</script>
+{% endblock %}

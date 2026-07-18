@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Cadastros mestres" %}
+
+{% block content %}
+<section class="sbu-page md-enterprise">
+  <header class="md-command-header">
+    <div class="md-command-copy">
+      <p class="eyebrow">CADASTROS MESTRES</p>
+      <div class="md-title-line">
+        <span class="md-title-icon" aria-hidden="true">▦</span>
+        <div>
+          <h1>Base fiscal e logística</h1>
+          <p>Centralize fabricantes, classificações fiscais, regras tributárias, depósitos e localizações utilizados em todo o SmartBuy.</p>
+        </div>
+      </div>
+      <div class="md-engine-status" aria-label="Status do módulo">
+        <span><i></i>Base centralizada</span>
+        <span><i></i>Integração com produtos</span>
+        <span><i></i>Governança ativa</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="sbu-kpi-grid md-kpi-grid" aria-label="Resumo dos cadastros mestres">
+    <article class="sbu-kpi sbu-kpi-blue">
+      <span class="sbu-kpi-icon">▤</span>
+      <div>
+        <small>Módulo selecionado</small>
+        <strong>{{ entity.title if section != "warehouses" else "Depósitos" }}</strong>
+        <p>Cadastro ativo no workspace</p>
+      </div>
+    </article>
+    <article class="sbu-kpi sbu-kpi-green">
+      <span class="sbu-kpi-icon">✓</span>
+      <div>
+        <small>Registros exibidos</small>
+        <strong>{{ rows|length }}</strong>
+        <p>Conforme a seção atual</p>
+      </div>
+    </article>
+    <article class="sbu-kpi sbu-kpi-violet">
+      <span class="sbu-kpi-icon">◇</span>
+      <div>
+        <small>Integração</small>
+        <strong>Catálogo / ERP</strong>
+        <p>Base compartilhada e auditável</p>
+      </div>
+    </article>
+    <article class="sbu-kpi sbu-kpi-gold">
+      <span class="sbu-kpi-icon">◆</span>
+      <div>
+        <small>Governança</small>
+        <strong>Enterprise</strong>
+        <p>Ativação e inativação controladas</p>
+      </div>
+    </article>
+  </section>
+
+  <nav class="md-tabs" aria-label="Cadastros mestres">
+    {% for key, item in entities.items() %}
+    <a href="/master-data?section={{ key }}" class="{{ 'active' if section == key else '' }}">
+      <span>{{ item.title }}</span>
+    </a>
+    {% endfor %}
+    <a href="/master-data?section=warehouses" class="{{ 'active' if section == 'warehouses' else '' }}">
+      <span>Depósitos e localizações</span>
+    </a>
+  </nav>
+
+  {% if error %}
+  <div class="sbu-alert sbu-alert-danger md-alert">
+    <strong>Não foi possível concluir o cadastro.</strong>
+    <span>
+      {% if error == "duplicate" %}
+        Código ou descrição já cadastrados.
+      {% elif error == "warehouse" %}
+        Depósito duplicado ou empresa inválida.
+      {% elif error == "location" %}
+        Localização duplicada ou depósito inválido.
+      {% else %}
+        Preencha todos os campos obrigatórios.
+      {% endif %}
+    </span>
+  </div>
+  {% endif %}
+
+  {% if section != "warehouses" %}
+    {% if "master_data.write" in permissions %}
+    <section class="sbu-workspace md-workspace">
+      <header class="md-section-heading">
+        <div>
+          <p class="eyebrow">NOVO CADASTRO</p>
+          <h2>{{ entity.title }}</h2>
+          <p>Inclua um novo registro na base compartilhada do SmartBuy.</p>
+        </div>
+      </header>
+
+      <form class="md-compact-form" method="post" action="/master-data/{{ section }}">
+        <div class="md-form-grid">
+          {% if "code" in entity.fields %}
+          <label>Código<input name="code" maxlength="20" required></label>
+          {% endif %}
+          {% if "name" in entity.fields %}
+          <label>Nome<input name="name" maxlength="160" required></label>
+          {% endif %}
+          {% if "description" in entity.fields %}
+          <label class="md-span-2">Descrição<input name="description" maxlength="240" required></label>
+          {% endif %}
+          {% if "national_rate" in entity.fields %}
+          <label>Alíquota nacional (%)<input name="national_rate" type="number" step="0.01" min="0" value="0"></label>
+          {% endif %}
+          {% if "imported_rate" in entity.fields %}
+          <label>Alíquota importada (%)<input name="imported_rate" type="number" step="0.01" min="0" value="0"></label>
+          {% endif %}
+          {% if "operation_type" in entity.fields %}
+          <label>Tipo de operação
+            <select name="operation_type">
+              <option value="ENTRADA">Entrada</option>
+              <option value="SAIDA">Saída</option>
+            </select>
+          </label>
+          {% endif %}
+        </div>
+        <div class="md-form-actions">
+          <button class="sbu-btn sbu-btn-primary" type="submit">Cadastrar {{ entity.title|lower }}</button>
+        </div>
+      </form>
+    </section>
+    {% endif %}
+
+    <section class="sbu-workspace md-table-workspace">
+      <header class="md-section-heading md-table-heading">
+        <div>
+          <p class="eyebrow">BASE CENTRALIZADA</p>
+          <h2>{{ entity.title }} cadastrados</h2>
+          <p>Consulte os registros, o status e execute ações de governança.</p>
+        </div>
+        <span class="md-count">{{ rows|length }} registro(s)</span>
+      </header>
+
+      <div class="md-table-scroll">
+        <table class="md-enterprise-table">
+          <thead>
+            <tr>
+              {% for field in entity.fields %}
+              <th>
+                {% if field == "code" %}Código
+                {% elif field == "name" %}Nome
+                {% elif field == "description" %}Descrição
+                {% elif field == "national_rate" %}Alíquota nacional
+                {% elif field == "imported_rate" %}Alíquota importada
+                {% elif field == "operation_type" %}Operação
+                {% else %}{{ field }}
+                {% endif %}
+              </th>
+              {% endfor %}
+              <th>Status</th>
+              {% if "master_data.write" in permissions %}<th>Ação</th>{% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              {% for field in entity.fields %}
+              <td>
+                {% if field == "code" %}<strong class="md-code">{{ row[field] }}</strong>
+                {% else %}{{ row[field] }}{% endif %}
+                {% if field in ["national_rate", "imported_rate"] %}%{% endif %}
+              </td>
+              {% endfor %}
+              <td>
+                <span class="md-status {{ 'active' if row['active'] else 'inactive' }}">
+                  <i></i>{{ "Ativo" if row["active"] else "Inativo" }}
+                </span>
+              </td>
+              {% if "master_data.write" in permissions %}
+              <td>
+                <form class="inline-form" method="post" action="/master-data/{{ section }}/{{ row['id'] }}/toggle">
+                  <button class="md-row-action" type="submit">{{ "Inativar" if row["active"] else "Ativar" }}</button>
+                </form>
+              </td>
+              {% endif %}
+            </tr>
+            {% else %}
+            <tr>
+              <td class="md-empty-cell" colspan="8">
+                <div class="md-empty-state">
+                  <span>▦</span>
+                  <strong>Nenhum registro cadastrado</strong>
+                  <p>Utilize o formulário acima para adicionar o primeiro cadastro desta seção.</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  {% else %}
+    {% if "master_data.write" in permissions %}
+    <section class="md-dual-workspace">
+      <section class="sbu-workspace md-workspace">
+        <header class="md-section-heading">
+          <div><p class="eyebrow">NOVO DEPÓSITO</p><h2>Dados do depósito</h2><p>Relacione o depósito à empresa responsável.</p></div>
+        </header>
+        <form class="md-compact-form" method="post" action="/master-data/warehouses">
+          <div class="md-form-grid">
+            <label>Empresa
+              <select name="company_id" required>
+                {% for company in companies %}
+                <option value="{{ company['id'] }}">{{ company["code"] }} — {{ company["trade_name"] or company["legal_name"] }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>Código<input name="code" maxlength="30" required></label>
+            <label class="md-span-2">Nome do depósito<input name="name" maxlength="160" required></label>
+          </div>
+          <div class="md-form-actions"><button class="sbu-btn sbu-btn-primary" type="submit">Cadastrar depósito</button></div>
+        </form>
+      </section>
+
+      <section class="sbu-workspace md-workspace">
+        <header class="md-section-heading">
+          <div><p class="eyebrow">NOVA LOCALIZAÇÃO</p><h2>Endereçamento interno</h2><p>Defina corredor, estante, nível e posição.</p></div>
+        </header>
+        <form class="md-compact-form" method="post" action="/master-data/locations">
+          <div class="md-form-grid">
+            <label class="md-span-2">Depósito
+              <select name="warehouse_id" required>
+                {% for warehouse in warehouses %}
+                <option value="{{ warehouse['id'] }}">{{ warehouse["company_code"] }} / {{ warehouse["code"] }} — {{ warehouse["name"] }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>Código da localização<input name="code" maxlength="40" required></label>
+            <label>Descrição<input name="description" maxlength="200"></label>
+            <label>Corredor<input name="aisle" maxlength="40"></label>
+            <label>Estante<input name="rack" maxlength="40"></label>
+            <label>Nível<input name="level" maxlength="40"></label>
+            <label>Posição<input name="bin" maxlength="40"></label>
+          </div>
+          <div class="md-form-actions"><button class="sbu-btn sbu-btn-primary" type="submit">Cadastrar localização</button></div>
+        </form>
+      </section>
+    </section>
+    {% endif %}
+
+    <section class="sbu-workspace md-table-workspace">
+      <header class="md-section-heading md-table-heading">
+        <div><p class="eyebrow">ESTRUTURA LOGÍSTICA</p><h2>Depósitos</h2><p>Unidades físicas vinculadas às empresas.</p></div>
+        <span class="md-count">{{ rows|length }} depósito(s)</span>
+      </header>
+      <div class="md-table-scroll">
+        <table class="md-enterprise-table">
+          <thead><tr><th>Empresa</th><th>Código</th><th>Nome</th><th>Localizações</th><th>Status</th>{% if "master_data.write" in permissions %}<th>Ação</th>{% endif %}</tr></thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td>{{ row["company_code"] }} — {{ row["company_name"] }}</td>
+              <td><strong class="md-code">{{ row["code"] }}</strong></td>
+              <td>{{ row["name"] }}</td><td>{{ row["location_count"] }}</td>
+              <td><span class="md-status {{ 'active' if row['active'] else 'inactive' }}"><i></i>{{ "Ativo" if row["active"] else "Inativo" }}</span></td>
+              {% if "master_data.write" in permissions %}
+              <td><form class="inline-form" method="post" action="/master-data/warehouses/{{ row['id'] }}/toggle"><button class="md-row-action" type="submit">{{ "Inativar" if row["active"] else "Ativar" }}</button></form></td>
+              {% endif %}
+            </tr>
+            {% else %}
+            <tr><td class="md-empty-cell" colspan="6"><div class="md-empty-state"><span>▤</span><strong>Nenhum depósito cadastrado</strong><p>Cadastre o primeiro depósito para estruturar o endereçamento logístico.</p></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sbu-workspace md-table-workspace">
+      <header class="md-section-heading md-table-heading">
+        <div><p class="eyebrow">ENDEREÇAMENTO</p><h2>Localizações</h2><p>Posições internas cadastradas em cada depósito.</p></div>
+        <span class="md-count">{{ locations|length }} localização(ões)</span>
+      </header>
+      <div class="md-table-scroll">
+        <table class="md-enterprise-table">
+          <thead><tr><th>Empresa</th><th>Depósito</th><th>Código</th><th>Descrição</th><th>Endereço interno</th><th>Status</th>{% if "master_data.write" in permissions %}<th>Ação</th>{% endif %}</tr></thead>
+          <tbody>
+            {% for row in locations %}
+            <tr>
+              <td>{{ row["company_code"] }}</td>
+              <td>{{ row["warehouse_code"] }} — {{ row["warehouse_name"] }}</td>
+              <td><strong class="md-code">{{ row["code"] }}</strong></td>
+              <td>{{ row["description"] or "—" }}</td>
+              <td><span class="md-address">C: {{ row["aisle"] or "—" }} / E: {{ row["rack"] or "—" }} / N: {{ row["level"] or "—" }} / P: {{ row["bin"] or "—" }}</span></td>
+              <td><span class="md-status {{ 'active' if row['active'] else 'inactive' }}"><i></i>{{ "Ativa" if row["active"] else "Inativa" }}</span></td>
+              {% if "master_data.write" in permissions %}
+              <td><form class="inline-form" method="post" action="/master-data/locations/{{ row['id'] }}/toggle"><button class="md-row-action" type="submit">{{ "Inativar" if row["active"] else "Ativar" }}</button></form></td>
+              {% endif %}
+            </tr>
+            {% else %}
+            <tr><td class="md-empty-cell" colspan="7"><div class="md-empty-state"><span>⌖</span><strong>Nenhuma localização cadastrada</strong><p>Cadastre posições internas para organizar os depósitos.</p></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+</section>
+{% endblock %}

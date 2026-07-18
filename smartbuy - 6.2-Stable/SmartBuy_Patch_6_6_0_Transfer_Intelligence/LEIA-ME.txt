@@ -1,0 +1,45 @@
+SMARTBUY TRANSFER INTELLIGENCE 6.6.0
+=========================================
+
+O QUE ESTE PATCH ENTREGA
+- Nova rota: /transfer-intelligence
+- Comparação de estoque e consumo entre empresas
+- Identificação de origem com excesso e destino com risco
+- Proteção do estoque mínimo/segurança da origem
+- Quantidade sugerida para transferência
+- Compra potencialmente evitada
+- Score e explicação de cada recomendação
+- Filtros de cobertura e período de análise
+- Interface Enterprise compatível com o visual atual
+
+COMO INSTALAR
+1. Copie esta pasta inteira para a pasta raiz do SmartBuy.
+2. Confirme que, nessa pasta, existem app/main.py e app/templates/base.html.
+3. Execute APLICAR_TRANSFER_INTELLIGENCE.bat.
+4. Inicie o SmartBuy normalmente.
+5. Abra http://127.0.0.1:8000/transfer-intelligence
+
+SEGURANÇA
+- O instalador cria backup em backups/before_transfer_intelligence_DATA_HORA.
+- Se alguma validação falhar, o rollback é automático.
+- Para desfazer manualmente, execute DESFAZER_TRANSFER_INTELLIGENCE.bat.
+
+DADOS UTILIZADOS
+- products
+- companies
+- product_company_settings.current_stock
+- product_company_settings.reserved_stock, quando existir
+- product_company_settings.minimum_stock, quando existir
+- product_company_settings.average_cost/last_cost, quando existir
+- stock_movements para consumo histórico
+
+REGRAS INICIAIS
+- Destino crítico: cobertura abaixo do limite definido.
+- Estoque-alvo do destino: cobertura configurável.
+- Origem excedente: cobertura acima do limite definido.
+- Sem consumo na origem: preserva o estoque mínimo e considera o restante.
+- A origem nunca é reduzida abaixo da reserva calculada.
+
+OBSERVAÇÃO
+O valor de compra evitada é uma estimativa gerencial:
+quantidade sugerida × custo de referência disponível.

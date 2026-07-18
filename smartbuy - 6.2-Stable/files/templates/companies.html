@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Empresas" %}
+{% block content %}
+<section class="sbu-page">
+  <header class="sbu-page-header">
+    <div class="sbu-page-copy"><p class="sbu-eyebrow">ESTRUTURA ORGANIZACIONAL</p><div class="sbu-title-row"><span class="sbu-title-icon" aria-hidden="true">▦</span><div><h1>Empresas</h1><p>Cadastre e organize as empresas controladas pelo SmartBuy.</p></div></div><div class="sbu-status-row"><span><i></i>Base multiempresa</span><span><i></i>Dados fiscais centralizados</span></div></div>
+  </header>
+
+  <section class="sbu-kpi-grid" aria-label="Resumo de empresas">
+    <article class="sbu-kpi blue"><span class="sbu-kpi-icon">▦</span><div><small>Empresas cadastradas</small><strong>{{ companies|length }}</strong><p>Matriz e filiais</p></div></article>
+    <article class="sbu-kpi green"><span class="sbu-kpi-icon">✓</span><div><small>Base operacional</small><strong>Ativa</strong><p>Gestão multiempresa disponível</p></div></article>
+    <article class="sbu-kpi violet"><span class="sbu-kpi-icon">◇</span><div><small>Identificação</small><strong>CNPJ</strong><p>Controle fiscal por empresa</p></div></article>
+    <article class="sbu-kpi gold"><span class="sbu-kpi-icon">⌖</span><div><small>Abrangência</small><strong>Nacional</strong><p>Cidade e UF por cadastro</p></div></article>
+  </section>
+
+  {% if error %}<div class="sbu-alert sbu-alert-danger">{{ error }}</div>{% endif %}
+
+  {% if "companies.write" in permissions %}
+  <section class="sbu-panel">
+    <header class="sbu-panel-header"><div><p class="sbu-eyebrow">NOVA EMPRESA</p><h2>Dados cadastrais</h2><p>Inclua a identificação fiscal e a localização.</p></div></header>
+    <form class="sbu-panel-body" method="post" action="/companies">
+      <div class="sbu-form-grid three">
+        <label class="sbu-field">Código<input name="code" required></label>
+        <label class="sbu-field">Razão social<input name="legal_name" required></label>
+        <label class="sbu-field">Nome fantasia<input name="trade_name"></label>
+        <label class="sbu-field">CNPJ/ID fiscal<input name="tax_id" required></label>
+        <label class="sbu-field">Cidade<input name="city"></label>
+        <label class="sbu-field">UF<input name="state" maxlength="2"></label>
+      </div>
+      <div class="sbu-form-actions"><button class="sbu-btn sbu-btn-primary" type="submit">Cadastrar empresa</button></div>
+    </form>
+  </section>
+  {% endif %}
+
+  <section class="sbu-workspace">
+    <header class="sbu-workspace-header"><div><p class="sbu-eyebrow">BASE MULTIEMPRESA</p><h2>Empresas cadastradas</h2><p>Dados fiscais e localização das unidades.</p></div></header>
+    <div class="sbu-table-scroll"><table class="sbu-table"><thead><tr><th>Código</th><th>Razão social</th><th>Fantasia</th><th>CNPJ/ID</th><th>Cidade/UF</th></tr></thead><tbody>
+      {% for c in companies %}<tr><td><strong>{{ c["code"] }}</strong></td><td>{{ c["legal_name"] }}</td><td>{{ c["trade_name"] or "—" }}</td><td>{{ c["tax_id"] }}</td><td>{{ c["city"] or "—" }}/{{ c["state"] or "—" }}</td></tr>{% else %}<tr><td class="sbu-table-empty" colspan="5">Nenhuma empresa cadastrada.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+</section>
+{% endblock %}

@@ -1,0 +1,169 @@
+/* SmartBuy Sprint 7.2 — Cadastros Mestres Enterprise
+   Autossuficiente: não depende das classes de cabeçalho de outros módulos. */
+
+.md-enterprise{animation:md-page-in .25s ease both}
+
+/* Cabeçalho executivo */
+.md-command-header{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:28px;
+  padding:14px 4px 18px;
+}
+.md-command-copy{min-width:0}
+.md-title-line{display:flex;align-items:center;gap:16px}
+.md-title-icon{
+  display:grid;
+  place-items:center;
+  width:52px;
+  height:52px;
+  flex:0 0 52px;
+  border-radius:15px;
+  background:linear-gradient(145deg,#2ce2aa,#0fae7d);
+  color:#05251c;
+  font-size:1.35rem;
+  font-weight:900;
+  box-shadow:0 14px 30px rgba(29,220,163,.18)
+}
+.md-command-header h1{
+  margin:0 0 7px;
+  font-size:clamp(1.9rem,2.5vw,2.7rem);
+  letter-spacing:-.04em
+}
+.md-command-header p{margin:0;color:#98b6ae;line-height:1.55}
+.md-engine-status{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.md-engine-status span{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 10px;
+  border:1px solid rgba(46,220,168,.15);
+  border-radius:999px;
+  background:rgba(7,46,37,.64);
+  color:#a7c9c0;
+  font-size:.72rem;
+  font-weight:700
+}
+.md-engine-status i{
+  width:8px;height:8px;border-radius:50%;
+  background:#22df9f;
+  box-shadow:0 0 12px rgba(34,223,159,.7)
+}
+
+/* KPIs */
+.md-kpi-grid{margin-bottom:18px}
+
+/* Abas */
+.md-tabs{
+  display:flex;gap:8px;flex-wrap:wrap;padding:10px;margin:0 0 18px;
+  border:1px solid rgba(83,190,160,.16);border-radius:14px;
+  background:rgba(4,28,23,.72);box-shadow:0 12px 30px rgba(0,0,0,.14)
+}
+.md-tabs a{
+  display:inline-flex;align-items:center;min-height:38px;padding:9px 13px;
+  border:1px solid transparent;border-radius:9px;color:#9cbab2;
+  text-decoration:none;font-size:.78rem;font-weight:800;transition:.15s ease
+}
+.md-tabs a:hover{color:#dff8f0;background:rgba(42,214,163,.07)}
+.md-tabs a.active{
+  color:#052219;border-color:#2bdca7;
+  background:linear-gradient(135deg,#35e3ae,#1fc78f);
+  box-shadow:0 8px 22px rgba(35,215,159,.16)
+}
+
+/* Workspaces */
+.md-alert{display:flex;gap:8px;align-items:center;margin-bottom:18px}
+.md-workspace,.md-table-workspace{
+  padding:0;margin:0 0 18px;overflow:hidden;
+  border:1px solid rgba(83,190,160,.17);border-radius:16px;
+  background:linear-gradient(145deg,rgba(7,39,32,.98),rgba(4,26,22,.99));
+  box-shadow:0 18px 44px rgba(0,0,0,.18)
+}
+.md-section-heading{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:20px 24px 17px;border-bottom:1px solid rgba(82,172,149,.12)
+}
+.md-section-heading h2{margin:3px 0 5px;font-size:1.05rem}
+.md-section-heading p{margin:0;color:#88a9a0;font-size:.78rem}
+.md-compact-form{padding:21px 24px 22px}
+.md-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.md-form-grid label{display:grid;gap:7px;margin:0;color:#9bb8b0;font-size:.72rem;font-weight:700}
+.md-form-grid input,.md-form-grid select{
+  margin:0!important;min-height:43px;
+  background:#031814!important;border-color:rgba(93,171,151,.25)!important
+}
+.md-span-2{grid-column:span 2}
+.md-form-actions{
+  display:flex;justify-content:flex-end;padding-top:18px;margin-top:18px;
+  border-top:1px solid rgba(82,172,149,.10)
+}
+.md-form-actions button{min-width:160px}
+
+/* Tabelas */
+.md-table-heading{align-items:center}
+.md-count{
+  display:inline-flex;padding:7px 10px;border:1px solid rgba(55,216,168,.18);
+  border-radius:999px;background:rgba(34,190,139,.08);
+  color:#52e5b5;font-size:.68rem;font-weight:900
+}
+.md-table-scroll{overflow:auto}
+.md-enterprise-table{width:100%;min-width:780px;border-collapse:collapse}
+.md-enterprise-table th{
+  position:sticky;top:0;z-index:2;padding:13px 15px;background:#083029;
+  color:#7fa69c;font-size:.66rem;font-weight:900;text-transform:uppercase;
+  letter-spacing:.045em;text-align:left
+}
+.md-enterprise-table td{
+  padding:13px 15px;border-bottom:1px solid rgba(77,154,135,.10);
+  color:#c9ded8;font-size:.76rem
+}
+.md-enterprise-table tbody tr{transition:background .14s ease}
+.md-enterprise-table tbody tr:hover{background:rgba(42,208,159,.045)}
+.md-code{color:#55e5b7}
+.md-status{
+  display:inline-flex;align-items:center;gap:7px;padding:5px 9px;
+  border-radius:999px;font-size:.66rem;font-weight:900
+}
+.md-status i{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 9px currentColor}
+.md-status.active{color:#4ce4b2;background:rgba(30,198,140,.12)}
+.md-status.inactive{color:#ff928e;background:rgba(242,89,83,.12)}
+.md-row-action{
+  min-height:31px;padding:7px 10px!important;
+  border:1px solid rgba(67,210,169,.22)!important;border-radius:8px!important;
+  background:rgba(8,51,42,.74)!important;color:#89dac4!important;font-size:.68rem!important
+}
+.md-row-action:hover{border-color:#3fddb0!important;color:#dff9f1!important}
+
+/* Estados vazios */
+.md-empty-cell{padding:0!important}
+.md-empty-state{
+  display:flex;align-items:center;flex-direction:column;justify-content:center;
+  min-height:190px;padding:30px;text-align:center
+}
+.md-empty-state>span{
+  display:grid;place-items:center;width:52px;height:52px;margin-bottom:12px;
+  border:1px solid rgba(52,216,168,.23);border-radius:50%;
+  background:rgba(35,185,139,.08);color:#45dfaf;font-size:1.35rem
+}
+.md-empty-state strong{color:#e6f5f1;font-size:.9rem}
+.md-empty-state p{max-width:430px;margin:7px 0 0;color:#789b92;font-size:.75rem}
+.md-dual-workspace{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.md-address{white-space:nowrap;color:#a4c2ba}
+
+@keyframes md-page-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media(max-width:1100px){.md-dual-workspace{grid-template-columns:1fr}}
+@media(max-width:760px){
+  .md-title-line{align-items:flex-start}
+  .md-title-icon{width:46px;height:46px;flex-basis:46px}
+  .md-form-grid{grid-template-columns:1fr}
+  .md-span-2{grid-column:auto}
+  .md-section-heading{align-items:flex-start;flex-direction:column}
+  .md-tabs{display:grid;grid-template-columns:1fr 1fr}
+  .md-tabs a{justify-content:center}
+  .md-form-actions button{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .md-enterprise{animation:none}
+  .md-tabs a,.md-enterprise-table tbody tr{transition:none}
+}

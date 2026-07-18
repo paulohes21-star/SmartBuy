@@ -1,0 +1,13 @@
+{
+  "name": "SmartBuy Executive Cockpit",
+  "version": "6.7.0",
+  "route": "/executive-cockpit",
+  "database_changes": false,
+  "features": [
+    "executive KPIs",
+    "automatic executive summary",
+    "financial opportunity ranking",
+    "company health map",
+    "transfer intelligence integration"
+  ]
+}

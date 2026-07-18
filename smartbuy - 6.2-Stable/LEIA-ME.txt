@@ -1,0 +1,32 @@
+SMARTBUY 6.7.0 — EXECUTIVE COCKPIT
+
+ENTREGA
+- Nova rota /executive-cockpit
+- KPIs executivos de economia, capital parado, produtos críticos e estoque total
+- Resumo executivo automático
+- Ranking financeiro das oportunidades
+- Mapa de saúde das empresas
+- Melhor empresa e empresa que merece maior atenção
+- Integração com Transfer Intelligence
+- Novo item no menu lateral
+
+INSTALAÇÃO
+1. Extraia o pacote na raiz do SmartBuy.
+2. Execute APLICAR_EXECUTIVE_COCKPIT_6_7_0.bat.
+3. Reinicie o SmartBuy.
+4. Pressione CTRL+F5.
+5. Abra http://127.0.0.1:8000/executive-cockpit
+
+ALTERAÇÕES
+- app/main.py
+- app/templates/base.html
+- app/executive_cockpit.py
+- app/templates/executive_cockpit.html
+- app/static/executive_cockpit.css
+
+SEM ALTERAÇÃO
+- banco de dados
+- ERP
+- PDF
+- e-mail
+- WhatsApp

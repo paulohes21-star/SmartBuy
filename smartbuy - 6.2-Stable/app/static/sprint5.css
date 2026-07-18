@@ -1,0 +1,157 @@
+/* SmartBuy Sprint 5 */
+.sprint5-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 20px;
+}
+.sprint5-filter {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+}
+.sprint5-filter select {
+  min-width: 190px;
+}
+.sprint5-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+.sprint5-grid .form-card {
+  display: grid;
+  gap: 10px;
+}
+.sprint5-table {
+  overflow-x: auto;
+}
+.sprint5-table table {
+  min-width: 1400px;
+}
+.row-alert {
+  background: rgb(255 184 76 / 6%);
+}
+.abc {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-weight: 900;
+}
+.abc-a {
+  background: rgb(255 107 107 / 18%);
+}
+.abc-b {
+  background: rgb(255 208 92 / 18%);
+}
+.abc-c {
+  background: rgb(46 230 166 / 18%);
+}
+@media (max-width: 900px) {
+  .sprint5-header,
+  .sprint5-filter {
+    display: grid;
+  }
+  .sprint5-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* SMARTBUY RFQ — Sprint 6.2 Presentation */
+.recommendation-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:14px}
+.recommendation-heading h2{margin:0 0 4px}.recommendation-heading p{margin:0}
+.rfq-primary-button,.whatsapp-button,.email-button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;font-weight:800;padding:11px 15px}
+.rfq-primary-button{background:#35dfad;color:#062119;box-shadow:0 8px 20px rgba(53,223,173,.15)}
+.buy-quantity{color:#61e8bd;white-space:nowrap}
+.rfq-page-header{align-items:flex-end}.rfq-summary{margin-bottom:18px}
+.rfq-card{margin:18px 0;padding:22px;border:1px solid rgba(61,211,169,.18);border-radius:16px;background:linear-gradient(145deg,rgba(13,50,42,.97),rgba(5,27,23,.98));box-shadow:0 15px 38px rgba(0,0,0,.18)}
+.rfq-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:15px;border-bottom:1px solid rgba(83,196,164,.13)}
+.rfq-card-header h2{margin:3px 0 5px}.rfq-card-header p{margin:0;color:#94b7ae}
+.rfq-value{text-align:right}.rfq-value small{display:block;color:#82a99e}.rfq-value strong{display:block;font-size:1.65rem;margin-top:5px}
+.rfq-contact{display:flex;gap:25px;flex-wrap:wrap;padding:13px 0;color:#a2c1b9}
+.rfq-table{width:100%;min-width:920px}.rfq-table th{text-align:left}.rfq-table td,.rfq-table th{padding:11px 9px}
+.rfq-requirements{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:15px 0}.rfq-requirements span{padding:6px 9px;border-radius:999px;background:rgba(46,218,166,.08);border:1px solid rgba(46,218,166,.16);color:#aee1d4;font-size:.8rem}
+.rfq-message{width:100%;min-height:220px;resize:vertical;box-sizing:border-box;padding:14px;background:#031712;color:#c9e9e0;border:1px solid rgba(78,203,168,.16);border-radius:11px;font:13px/1.55 Consolas,"Cascadia Code",monospace}
+.rfq-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:14px}
+.whatsapp-button{background:#25d366;color:#041b0d}.email-button{background:#3687e8;color:white}
+.empty-rfq{text-align:center;padding:50px 20px;border:1px dashed rgba(70,200,165,.25);border-radius:16px}
+@media(max-width:760px){.recommendation-heading,.rfq-card-header{align-items:stretch;flex-direction:column}.rfq-value{text-align:left}.rfq-actions>*{width:100%}}
+@media print{
+  body.printing-rfq .sidebar,
+  body.printing-rfq .topbar,
+  body.printing-rfq main>*:not(.print-target),
+  body.printing-rfq .rfq-actions,
+  body.printing-rfq .rfq-message{display:none!important}
+  body.printing-rfq main{margin:0!important;padding:0!important}
+  body.printing-rfq .print-target{display:block!important;box-shadow:none!important;border:0!important;background:white!important;color:#111!important}
+  body.printing-rfq .print-target *{color:#111!important}
+  body.printing-rfq .print-target .rfq-requirements span{border:1px solid #aaa!important;background:white!important}
+}
+
+
+/* SMARTBUY — Ação principal de cotação */
+.sprint5-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 10px 16px;
+  border: 1px solid #35dfad;
+  border-radius: 9px;
+  background: #35dfad;
+  color: #062119;
+  font: inherit;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(53, 223, 173, .14);
+  transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+}
+
+.sprint5-action-button:hover {
+  color: #062119;
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 11px 24px rgba(53, 223, 173, .20);
+}
+
+.sprint5-action-button:focus-visible {
+  outline: 3px solid rgba(53, 223, 173, .28);
+  outline-offset: 2px;
+}
+
+.sprint5-filter > button,
+.sprint5-filter > .sprint5-action-button {
+  min-height: 42px;
+}
+
+@media (max-width: 900px) {
+  .sprint5-filter > button,
+  .sprint5-filter > .sprint5-action-button {
+    width: 100%;
+  }
+}
+
+
+/* SMARTBUY — Botão real de geração de cotações */
+.sprint5-filter .quotation-action-button {
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 9px;
+  font: inherit;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .sprint5-filter .quotation-action-button {
+    width: 100%;
+  }
+}

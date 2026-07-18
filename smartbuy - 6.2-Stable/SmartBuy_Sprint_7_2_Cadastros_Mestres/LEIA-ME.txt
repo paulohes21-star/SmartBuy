@@ -1,0 +1,22 @@
+SMARTBUY — SPRINT 7.2
+CADASTROS MESTRES ENTERPRISE
+
+Esta versão:
+- substitui somente o template de Cadastros Mestres;
+- substitui somente o CSS específico desse módulo;
+- não substitui o base.html inteiro;
+- corrige de forma direcionada os nomes:
+  Usuários
+  Inteligência de compras
+  Integrações ERP
+- cria backup automático.
+
+COMO APLICAR
+1. Extraia esta pasta dentro da raiz do SmartBuy.
+2. Execute APLICAR_SPRINT_7_2.bat.
+3. Reinicie o SmartBuy.
+4. Pressione Ctrl+F5.
+
+BACKUP
+Será criado em:
+backups\sprint7_2_master_data_DATA_HORA

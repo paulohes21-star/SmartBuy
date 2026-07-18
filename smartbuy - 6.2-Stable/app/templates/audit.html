@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Auditoria" %}
+{% block content %}
+<section class="sbu-page">
+  <header class="sbu-page-header">
+    <div class="sbu-page-copy"><p class="sbu-eyebrow">GOVERNANÇA E RASTREABILIDADE</p><div class="sbu-title-row"><span class="sbu-title-icon" aria-hidden="true">◷</span><div><h1>Auditoria</h1><p>Histórico das ações importantes executadas no SmartBuy.</p></div></div><div class="sbu-status-row"><span><i></i>Histórico auditável</span><span><i></i>Rastreabilidade ativa</span></div></div>
+  </header>
+
+  <section class="sbu-kpi-grid" aria-label="Resumo de auditoria">
+    <article class="sbu-kpi blue"><span class="sbu-kpi-icon">◷</span><div><small>Eventos exibidos</small><strong>{{ events|length }}</strong><p>Registros disponíveis</p></div></article>
+    <article class="sbu-kpi green"><span class="sbu-kpi-icon">✓</span><div><small>Status</small><strong>Ativo</strong><p>Auditoria habilitada</p></div></article>
+    <article class="sbu-kpi violet"><span class="sbu-kpi-icon">◎</span><div><small>Origem</small><strong>Usuário/Sistema</strong><p>Identificação do responsável</p></div></article>
+    <article class="sbu-kpi gold"><span class="sbu-kpi-icon">◆</span><div><small>Integridade</small><strong>Enterprise</strong><p>Histórico centralizado</p></div></article>
+  </section>
+
+  <section class="sbu-workspace">
+    <header class="sbu-workspace-header"><div><p class="sbu-eyebrow">TRILHA DE EVENTOS</p><h2>Ações registradas</h2><p>Consulte data, responsável, ação e detalhes.</p></div></header>
+    <div class="sbu-table-scroll"><table class="sbu-table"><thead><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Detalhes</th></tr></thead><tbody>
+      {% for e in events %}<tr><td>{{ e["created_at"] }}</td><td><strong>{{ e["actor"] or "Sistema" }}</strong></td><td><span class="sbu-badge sbu-badge-info">{{ e["action"] }}</span></td><td>{{ e["details"] or "—" }}</td></tr>{% else %}<tr><td class="sbu-table-empty" colspan="4">Nenhum evento de auditoria encontrado.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+</section>
+{% endblock %}

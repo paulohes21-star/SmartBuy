@@ -1,0 +1,788 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Inteligência de compras" %}
+
+{% block content %}
+<section class="sb-page sb-purchasing-page">
+  <header class="sb-command-header">
+    <div class="sb-command-copy">
+      <p class="eyebrow">MOTOR INTELIGENTE DE COMPRAS</p>
+      <div class="sb-title-line">
+        <span class="sb-title-icon" aria-hidden="true">↗</span>
+        <div>
+          <h1>Reposição, ruptura e Curva ABC</h1>
+          <p>Recomendações calculadas a partir do consumo, estoque disponível, lead time e política de segurança.</p>
+        </div>
+      </div>
+      <div class="sb-engine-status" aria-label="Status do motor de compras">
+        <span><i></i>Motor inteligente ativo</span>
+        <span><i></i>Forecast atualizado</span>
+        <span><i></i>Curva ABC calculada</span>
+        <span><i></i>Dados sincronizados</span>
+        <span><i></i>Engine operacional</span>
+      </div>
+    </div>
+    <form method="get" class="sb-command-actions" id="purchase-recalculate-form" onsubmit="return submitPurchaseRecalculation(event)">
+      <label class="sr-only" for="purchase-company-filter">Empresa</label>
+      <select name="company_id" id="purchase-company-filter">
+        <option value="">Todas as empresas</option>
+        {% for company in companies %}
+        <option value="{{ company['id'] }}" {{ 'selected' if selected_company_id == company['id'] else '' }}>
+          {{ company["code"] }} — {{ company["trade_name"] or company["legal_name"] }}
+        </option>
+        {% endfor %}
+      </select>
+      <label class="sr-only" for="purchase-months-filter">Período de análise</label>
+      <select name="analysis_months" id="purchase-months-filter">
+        {% for value in [1, 2, 3, 6, 12] %}
+        <option value="{{ value }}" {{ 'selected' if selected_analysis_months == value else '' }}>Média de {{ value }} mês(es)</option>
+        {% endfor %}
+      </select>
+      {% if products_to_buy > 0 %}
+      <button type="button" class="sb-btn sb-btn-primary" onclick="openQuotationRequests()">🛒 Gerar cotações</button>
+      {% endif %}
+      <button type="submit" class="sb-btn sb-btn-outline">Recalcular</button>
+    </form>
+  </header>
+
+  <section class="sb-kpi-grid" aria-label="Indicadores principais">
+    <article class="sb-kpi sb-kpi-blue" tabindex="0">
+      <span class="sb-kpi-icon">◇</span><div><small>Produtos analisados</small><strong>{{ total_products }} itens</strong><p>Última análise concluída agora</p></div>
+    </article>
+    <article class="sb-kpi sb-kpi-green" tabindex="0">
+      <span class="sb-kpi-icon">🛒</span><div><small>Comprar agora</small><strong>{{ products_to_buy }} itens</strong><p class="sb-kpi-alert">Prioridade alta</p></div>
+    </article>
+    <article class="sb-kpi sb-kpi-violet" tabindex="0">
+      <span class="sb-kpi-icon">◷</span><div><small>Ruptura prevista</small><strong>{{ rupture_soon }} itens</strong><p>Próximos 30 dias</p></div>
+    </article>
+    <article class="sb-kpi sb-kpi-gold" tabindex="0">
+      <span class="sb-kpi-icon">$</span><div><small>Compra estimada</small><strong>R$ {{ "{:,.2f}".format(estimated_value).replace(",", "_").replace(".", ",").replace("_", ".") }}</strong><p>Baseada no consumo médio</p></div>
+    </article>
+  </section>
+
+  <section class="sb-insight-grid" id="executive-overview">
+    <article class="sb-insight-card sb-abc-card">
+      <header><h2>Curva ABC</h2><span>{{ total_products }} itens</span></header>
+      <div class="sb-abc-content">
+        <div class="sb-donut" style="--a: {{ (abc_counts['A'] * 100 / total_products) if total_products else 0 }}%; --b: {{ ((abc_counts['A'] + abc_counts['B']) * 100 / total_products) if total_products else 0 }}%"><span>ABC</span></div>
+        <div class="sb-legend">
+          <div><i class="a"></i><span><b>A — Itens críticos</b><small>{{ abc_counts['A'] }} produtos</small></span></div>
+          <div><i class="b"></i><span><b>B — Itens importantes</b><small>{{ abc_counts['B'] }} produtos</small></span></div>
+          <div><i class="c"></i><span><b>C — Itens de apoio</b><small>{{ abc_counts['C'] }} produtos</small></span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="sb-insight-card sb-demand-card">
+      <header><h2>Tendência de demanda</h2><span class="{{ 'positive' if demand_growth >= 0 else 'negative' }}">{{ '+' if demand_growth >= 0 else '' }}{{ demand_growth }}%</span></header>
+      <svg class="sb-demand-chart" viewBox="0 0 600 180" role="img" aria-label="Consumo mensal dos últimos sete meses">
+        <defs><linearGradient id="demandArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#25e0a7" stop-opacity=".32"/><stop offset="1" stop-color="#25e0a7" stop-opacity="0"/></linearGradient></defs>
+        <g class="grid-lines"><line x1="20" y1="40" x2="580" y2="40"/><line x1="20" y1="80" x2="580" y2="80"/><line x1="20" y1="120" x2="580" y2="120"/><line x1="20" y1="160" x2="580" y2="160"/></g>
+        <polygon points="24,160 {{ demand_chart_points }} 576,160" fill="url(#demandArea)"/>
+        <polyline points="{{ demand_chart_points }}" fill="none" stroke="#27e2a9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        {% for point in monthly_demand %}<text x="{{ 24 + loop.index0 * 92 }}" y="176">{{ point.label }}</text>{% endfor %}
+      </svg>
+    </article>
+
+    <article class="sb-insight-card sb-health-card">
+      <header><h2>Saúde do estoque</h2><span>{{ total_products }} itens</span></header>
+      <div class="sb-health-row"><div><b>Estoque saudável</b><strong>{{ health_percentages['healthy'] }}%</strong></div><div class="sb-health-track"><i class="healthy" style="width:{{ health_percentages['healthy'] }}%"></i></div><small>{{ health_counts['healthy'] }} produtos</small></div>
+      <div class="sb-health-row"><div><b>Atenção</b><strong>{{ health_percentages['attention'] }}%</strong></div><div class="sb-health-track"><i class="attention" style="width:{{ health_percentages['attention'] }}%"></i></div><small>{{ health_counts['attention'] }} produtos</small></div>
+      <div class="sb-health-row"><div><b>Risco de ruptura</b><strong>{{ health_percentages['risk'] }}%</strong></div><div class="sb-health-track"><i class="risk" style="width:{{ health_percentages['risk'] }}%"></i></div><small>{{ health_counts['risk'] }} produtos</small></div>
+    </article>
+  </section>
+
+
+
+
+  <section class="sb-recommendations-card sb-operational-workspace" id="operational-workspace" aria-labelledby="operational-workspace-title">
+    <nav class="sb-workspace-jump" aria-label="Navegação da Inteligência de Compras">
+      <a href="#executive-overview">Visão executiva</a>
+      <a href="#operational-workspace" class="active">Workspace operacional</a>
+      <a href="#sb-ai-center-title">Decisões da IA</a>
+    </nav>
+    <header class="sb-table-header sb-workspace-header">
+      <div class="sb-workspace-title">
+        <p class="eyebrow">WORKSPACE OPERACIONAL</p>
+        <h2 id="operational-workspace-title">Estoque e Recomendações</h2>
+        <p>Pesquise, priorize e transforme recomendações em ações de compra.</p>
+        <div class="sb-workspace-summary" aria-label="Resumo do workspace">
+          <span><b>{{ total_products }}</b> produtos</span>
+          <span class="critical"><b>{{ rupture_soon }}</b> críticos</span>
+          <span class="buy"><b>{{ products_to_buy }}</b> para comprar</span>
+          <span><b>{{ health_counts['healthy'] }}</b> saudáveis</span>
+        </div>
+      </div>
+      <div class="sb-table-tools sb-workspace-tools">
+        <div class="sb-quick-filters" role="group" aria-label="Filtros rápidos">
+          <button type="button" class="active" data-workspace-filter="all"><span>Todos</span><b>{{ total_products }}</b></button>
+          <button type="button" data-workspace-filter="buy"><span>Comprar</span><b>{{ products_to_buy }}</b></button>
+          <button type="button" data-workspace-filter="critical"><span>Críticos</span><b>{{ rupture_soon }}</b></button>
+          <button type="button" data-workspace-filter="attention"><span>Atenção</span><b>{{ health_counts['attention'] }}</b></button>
+        </div>
+        <div class="sb-workspace-search-row">
+          <label class="sb-search"><span>⌕</span><input id="recommendation-search" type="search" placeholder="Buscar produto, código ou fornecedor" aria-label="Buscar recomendações"></label>
+          <button type="button" class="sb-btn sb-btn-outline" id="clear-recommendation-search">Limpar</button>
+        </div>
+      </div>
+    </header>
+    <div class="sb-table-scroll">
+      <table class="sb-recommendation-table" id="recommendation-table">
+        <thead><tr>
+          <th><button type="button" class="sb-sort" data-sort-index="0">ABC <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="1">Produto <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="2" data-sort-number>Disponível <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="3" data-sort-number>Consumo/dia <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="4" data-sort-number>Cobertura <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="5" data-sort-number>Ponto reposição <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="6" data-sort-number>Segurança <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="7" data-sort-number>Sugestão <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="8">Ruptura <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="9" data-sort-number>Giro <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="10">Fornecedor <span>↕</span></button></th>
+          <th><button type="button" class="sb-sort" data-sort-index="11" data-sort-number>Custo referência <span>↕</span></button></th>
+        </tr></thead>
+        <tbody>
+          {% for item in recommendations %}
+          {% set critical = item.days_of_cover is not none and item.days_of_cover <= 30 %}
+          {% set attention = item.days_of_cover is not none and item.days_of_cover > 30 and item.days_of_cover <= 60 %}
+          <tr class="{{ 'is-critical' if critical else ('is-attention' if attention else '') }}"
+              data-code="{{ item.internal_code|lower }}"
+              data-status="{{ 'buy critical' if item.suggested_quantity > 0 and critical else ('buy attention' if item.suggested_quantity > 0 else ('critical' if critical else ('attention' if attention else 'healthy'))) }}"
+              data-product-code="{{ item.internal_code }}"
+              data-product-description="{{ item.description }}"
+              data-available="{{ item.available_stock }}"
+              data-consumption="{{ item.average_daily_consumption }}"
+              data-coverage="{{ item.days_of_cover if item.days_of_cover is not none else '' }}"
+              data-reorder-point="{{ item.reorder_point }}"
+              data-safety-stock="{{ item.safety_stock }}"
+              data-suggested="{{ item.suggested_quantity }}"
+              data-rupture="{{ item.rupture_date or '—' }}"
+              data-supplier="{{ item.best_quote_supplier_name or item.preferred_supplier_name or 'Não definido' }}"
+              data-search="{{ (item.internal_code ~ ' ' ~ item.description ~ ' ' ~ (item.best_quote_supplier_name or item.preferred_supplier_name or 'Não definido'))|lower }}">
+            <td><span class="sb-abc sb-abc-{{ item.abc_class|lower }}">{{ item.abc_class }}</span></td>
+            <td>
+              <div class="sb-product-cell">
+                <div class="sb-product-main">
+                  <strong>{{ item.internal_code }}</strong>
+                  <small>{{ item.description }}</small>
+                </div>
+                <div class="sb-product-meta">
+                  <span>{{ item.best_quote_supplier_name or item.preferred_supplier_name or "Sem fornecedor" }}</span>
+                  <span class="{{ 'critical' if critical else ('attention' if attention else 'healthy') }}">{{ 'Crítico' if critical else ('Atenção' if attention else 'Saudável') }}</span>
+                </div>
+              </div>
+            </td>
+            <td>{{ item.available_stock }}</td><td>{{ item.average_daily_consumption }}</td>
+            <td>{% if item.days_of_cover is not none %}<span class="sb-coverage {{ 'critical' if critical else ('attention' if attention else 'healthy') }}">{{ item.days_of_cover }} dias</span>{% else %}<span class="sb-coverage neutral">Sem consumo</span>{% endif %}</td>
+            <td>{{ item.reorder_point }}</td><td>{{ item.safety_stock }}</td>
+            <td>
+              {% if item.suggested_quantity > 0 %}
+              <div class="sb-suggestion-action">
+                <strong class="sb-buy">{{ item.suggested_quantity }} UN</strong>
+                <button type="button" class="sb-row-explain" data-explain-product="{{ item.internal_code|lower }}" aria-label="Explicar recomendação para {{ item.internal_code }}">Explicar</button>
+                <button type="button" class="sb-row-cta" onclick="openQuotationRequests()" aria-label="Gerar cotação para {{ item.internal_code }}">Gerar cotação</button>
+              </div>
+              {% else %}
+              <span class="sb-no-buy">Monitorar</span>
+              {% endif %}
+            </td>
+            <td>{{ item.rupture_date or "—" }}</td><td>{{ item.turnover }}x</td>
+            <td>{{ item.best_quote_supplier_name or item.preferred_supplier_name or "Não definido" }}</td>
+            <td>R$ {{ "%.4f"|format(item.best_quote_landed_unit_cost if item.best_quote_landed_unit_cost is not none else item.average_cost) }}</td>
+          </tr>
+          {% else %}<tr><td colspan="12" class="empty">Cadastre parâmetros de produto por empresa para iniciar a análise.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <footer class="sb-table-footer">
+      <span>Exibindo <b id="visible-recommendation-count">{{ total_products }}</b> de {{ total_products }} itens</span>
+      <div class="sb-pagination" aria-label="Paginação da tabela">
+        <label>Itens por página
+          <select id="workspace-page-size"><option value="10">10</option><option value="15" selected>15</option><option value="25">25</option><option value="50">50</option></select>
+        </label>
+        <button type="button" id="workspace-prev" aria-label="Página anterior">←</button>
+        <div id="workspace-page-buttons" class="sb-page-buttons" aria-label="Páginas"></div>
+        <span id="workspace-page-label">Página 1</span>
+        <button type="button" id="workspace-next" aria-label="Próxima página">→</button>
+      </div>
+      <span>Atualizado agora</span>
+    </footer>
+  </section>
+
+  <section class="sb-ai-center" id="executive-decisions" aria-labelledby="sb-ai-center-title">
+    <article class="sb-ai-summary">
+      <header>
+        <div>
+          <p class="eyebrow">SMARTBUY AI DECISION CENTER</p>
+          <h2 id="sb-ai-center-title">Resumo executivo da decisão</h2>
+        </div>
+        <span class="sb-ai-status">{{ decision_center.status }}</span>
+      </header>
+      <p class="sb-ai-summary-text">{{ decision_center.summary }}</p>
+      <div class="sb-ai-metrics" aria-label="Impacto financeiro e operacional">
+        <div><small>Investimento recomendado</small><strong>{{ decision_center.metrics.recommended_investment }}</strong></div>
+        <div><small>Itens críticos</small><strong>{{ decision_center.metrics.critical_items }}</strong><span>{{ decision_center.metrics.critical_stock_value }} em estoque atual</span></div>
+        <div><small>Capital sem consumo</small><strong>{{ decision_center.metrics.idle_capital }}</strong><span>{{ decision_center.metrics.idle_items }} item(ns)</span></div>
+        <div><small>Sem fornecedor definido</small><strong>{{ decision_center.metrics.undefined_suppliers }}</strong><span>entre os itens recomendados</span></div>
+      </div>
+    </article>
+
+    <div class="sb-ai-columns">
+      <article class="sb-ai-panel">
+        <header><div><p class="eyebrow">PRIORIDADES</p><h3>O que deve ser tratado primeiro</h3></div><span>{{ decision_center.priorities|length }} exibida(s)</span></header>
+        <div class="sb-priority-list">
+          {% for priority in decision_center.priorities %}
+          <details class="sb-priority-item" {{ 'open' if loop.first else '' }}>
+            <summary>
+              <b>{{ priority.position }}</b>
+              <span><strong>{{ priority.code }}</strong><small>{{ priority.description }}</small></span>
+              <em class="{{ priority.urgency|lower }}">{{ priority.urgency }}</em>
+              <span class="sb-priority-quantity">Comprar {{ priority.suggested_quantity }} UN<small>{{ priority.estimated_value }}</small></span>
+              <button type="button" class="sb-priority-focus" data-focus-product="{{ priority.code|lower }}" aria-label="Ver {{ priority.code }} no workspace">Ver no estoque</button>
+            </summary>
+            <div><p>{{ priority.reason }}</p><small>Fornecedor considerado: {{ priority.supplier }}</small></div>
+          </details>
+          {% else %}
+          <div class="sb-ai-empty"><strong>Nenhuma compra prioritária</strong><span>O motor não identificou necessidade de reposição com os dados atuais.</span></div>
+          {% endfor %}
+        </div>
+      </article>
+
+      <aside class="sb-ai-panel sb-action-panel">
+        <header><div><p class="eyebrow">PRÓXIMAS AÇÕES</p><h3>Plano recomendado</h3></div></header>
+        <ol class="sb-action-list">
+          {% for action in decision_center.actions %}
+          <li class="{{ action.state }}"><i>{{ loop.index }}</i><span><strong>{{ action.title }}</strong><small>{{ action.detail }}</small></span></li>
+          {% endfor %}
+        </ol>
+        {% if products_to_buy > 0 %}
+        <button type="button" class="sb-btn sb-btn-primary sb-ai-cta" onclick="openQuotationRequests()">Gerar cotações recomendadas</button>
+        {% endif %}
+      </aside>
+    </div>
+  </section>
+
+
+</section>
+
+<aside class="sb-ai-drawer" id="sb-ai-drawer" aria-hidden="true" aria-labelledby="sb-ai-drawer-title">
+  <div class="sb-ai-drawer-backdrop" data-close-ai-drawer></div>
+  <section class="sb-ai-drawer-panel" role="dialog" aria-modal="true">
+    <header>
+      <div>
+        <p class="eyebrow">SMARTBUY EXPLAIN ENGINE</p>
+        <h2 id="sb-ai-drawer-title">Explicação da recomendação</h2>
+      </div>
+      <button type="button" class="sb-ai-drawer-close" data-close-ai-drawer aria-label="Fechar explicação">×</button>
+    </header>
+    <div class="sb-ai-drawer-product">
+      <strong id="drawer-product-code">—</strong>
+      <span id="drawer-product-description">Selecione uma prioridade para ver a explicação.</span>
+    </div>
+    <div class="sb-ai-drawer-severity" id="drawer-severity">Aguardando seleção</div>
+    <p class="sb-ai-drawer-reason" id="drawer-reason">O SmartBuy mostrará aqui os dados que sustentam a decisão.</p>
+    <dl class="sb-ai-drawer-metrics">
+      <div><dt>Estoque disponível</dt><dd id="drawer-available">—</dd></div>
+      <div><dt>Consumo médio/dia</dt><dd id="drawer-consumption">—</dd></div>
+      <div><dt>Cobertura</dt><dd id="drawer-coverage">—</dd></div>
+      <div><dt>Ponto de reposição</dt><dd id="drawer-reorder">—</dd></div>
+      <div><dt>Estoque de segurança</dt><dd id="drawer-safety">—</dd></div>
+      <div><dt>Ruptura prevista</dt><dd id="drawer-rupture">—</dd></div>
+    </dl>
+    <div class="sb-ai-drawer-supplier">Fornecedor considerado: <strong id="drawer-supplier">—</strong></div>
+    <div class="sb-ai-drawer-actions">
+      <button type="button" class="sb-btn sb-btn-outline" data-close-ai-drawer>Voltar ao estoque</button>
+      <button type="button" class="sb-btn sb-btn-primary" id="drawer-generate-quote">Gerar cotação</button>
+    </div>
+  </section>
+</aside>
+
+{% if "purchasing_intelligence.write" in permissions %}
+<div class="sprint5-grid">
+  <form class="form-card" method="post"
+        action="/purchasing-intelligence/movement">
+    <h2>Registrar consumo/movimento</h2>
+    <label>Produto
+      <select name="product_id" required>
+        {% for product in products %}
+        <option value="{{ product['id'] }}">
+          {{ product["internal_code"] }} — {{ product["description"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Empresa
+      <select name="company_id" required>
+        {% for company in companies %}
+        <option value="{{ company['id'] }}">
+          {{ company["code"] }} —
+          {{ company["trade_name"] or company["legal_name"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Tipo
+      <select name="movement_type">
+        <option value="CONSUMPTION">Consumo</option>
+        <option value="SALE">Venda</option>
+        <option value="OUT">Saída</option>
+        <option value="IN">Entrada</option>
+        <option value="ADJUSTMENT">Ajuste</option>
+      </select>
+    </label>
+    <label>Quantidade<input name="quantity" type="number" step="0.01" min="0" required></label>
+    <label>Data<input name="movement_date" type="date" required></label>
+    <label>Referência<input name="reference_number"></label>
+    <label>Custo unitário<input name="unit_cost" type="number" step="0.0001" min="0"></label>
+    <label>Observação<input name="notes"></label>
+    <button type="submit">Registrar</button>
+  </form>
+
+  <form class="form-card" method="post"
+        action="/purchasing-intelligence/cost">
+    <h2>Registrar custo de compra</h2>
+    <label>Produto
+      <select name="product_id" required>
+        {% for product in products %}
+        <option value="{{ product['id'] }}">
+          {{ product["internal_code"] }} — {{ product["description"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Empresa
+      <select name="company_id" required>
+        {% for company in companies %}
+        <option value="{{ company['id'] }}">
+          {{ company["code"] }} —
+          {{ company["trade_name"] or company["legal_name"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Fornecedor
+      <select name="supplier_id">
+        <option value="">Não informado</option>
+        {% for supplier in suppliers %}
+        <option value="{{ supplier['id'] }}">
+          {{ supplier["code"] }} —
+          {{ supplier["trade_name"] or supplier["legal_name"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Custo unitário<input name="unit_cost" type="number" step="0.0001" min="0" required></label>
+    <label>Quantidade<input name="quantity" type="number" step="0.01" min="0" value="0"></label>
+    <label>Data<input name="cost_date" type="date" required></label>
+    <label>Documento<input name="reference_number"></label>
+    <button type="submit">Registrar custo</button>
+  </form>
+
+  <form class="form-card" method="post"
+        action="/purchasing-intelligence/quote">
+    <h2>Cotação inteligente</h2>
+    <label>Empresa
+      <select name="company_id" required>
+        {% for company in companies %}
+        <option value="{{ company['id'] }}">
+          {{ company["code"] }} —
+          {{ company["trade_name"] or company["legal_name"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Produto
+      <select name="product_id" required>
+        {% for product in products %}
+        <option value="{{ product['id'] }}">
+          {{ product["internal_code"] }} — {{ product["description"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Fornecedor
+      <select name="supplier_id" required>
+        {% for supplier in suppliers %}
+        <option value="{{ supplier['id'] }}">
+          {{ supplier["code"] }} —
+          {{ supplier["trade_name"] or supplier["legal_name"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Quantidade<input name="quantity" type="number" step="0.01" min="0.01" required></label>
+    <label>Preço unitário<input name="unit_price" type="number" step="0.0001" min="0" required></label>
+    <label>Frete total<input name="freight_total" type="number" step="0.01" min="0" value="0"></label>
+    <label>Impostos totais<input name="taxes_total" type="number" step="0.01" min="0" value="0"></label>
+    <label>Desconto total<input name="discount_total" type="number" step="0.01" min="0" value="0"></label>
+    <label>Prazo pagamento (dias)<input name="payment_term_days" type="number" min="0" value="0"></label>
+    <label>Lead time (dias)<input name="lead_time_days" type="number" min="0" value="0"></label>
+    <label>Válida até<input name="valid_until" type="date"></label>
+    <label>Observação<input name="notes"></label>
+    <button type="submit">Registrar cotação</button>
+  </form>
+
+  {% if "purchasing_intelligence.configure" in permissions %}
+  <form class="form-card" method="post"
+        action="/purchasing-intelligence/policy">
+    <h2>Política automática de reposição</h2>
+    <label>Produto
+      <select name="product_id" required>
+        {% for product in products %}
+        <option value="{{ product['id'] }}">
+          {{ product["internal_code"] }} — {{ product["description"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Empresa
+      <select name="company_id" required>
+        {% for company in companies %}
+        <option value="{{ company['id'] }}">
+          {{ company["code"] }} —
+          {{ company["trade_name"] or company["legal_name"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Meses para média<input name="analysis_months" type="number" min="1" value="3"></label>
+    <label>Dias de segurança<input name="safety_days" type="number" min="0" value="15"></label>
+    <label>Dias de cobertura<input name="coverage_days" type="number" min="1" value="60"></label>
+    <label>Lead time (dias)<input name="lead_time_days" type="number" min="0" value="0"></label>
+    <label>Estoque em pedidos<input name="on_order_stock" type="number" step="0.01" min="0" value="0"></label>
+    <button type="submit">Salvar política</button>
+  </form>
+  {% endif %}
+
+  <form class="form-card" method="post"
+        action="/purchasing-intelligence/supplier">
+    <h2>Fornecedor preferencial</h2>
+    <label>Produto
+      <select name="product_id" required>
+        {% for product in products %}
+        <option value="{{ product['id'] }}">
+          {{ product["internal_code"] }} — {{ product["description"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Fornecedor
+      <select name="supplier_id" required>
+        {% for supplier in suppliers %}
+        <option value="{{ supplier['id'] }}">
+          {{ supplier["code"] }} —
+          {{ supplier["trade_name"] or supplier["legal_name"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label><input name="preferred" type="checkbox" value="1"> Preferencial</label>
+    <label>Último preço<input name="last_price" type="number" step="0.0001" min="0"></label>
+    <label>Lead time<input name="lead_time_days" type="number" min="0"></label>
+    <label>Pedido mínimo<input name="minimum_order_quantity" type="number" step="0.01" min="0" value="0"></label>
+    <label>Score 0–100<input name="supplier_score" type="number" step="0.01" min="0" max="100" value="0"></label>
+    <button type="submit">Salvar fornecedor</button>
+  </form>
+
+  <form class="form-card" method="post"
+        action="/purchasing-intelligence/snapshot">
+    <h2>Fotografia diária do estoque</h2>
+    <p class="muted">
+      Use diariamente para melhorar o cálculo de giro pelo estoque médio.
+    </p>
+    <label>Empresa
+      <select name="company_id" required>
+        {% for company in companies %}
+        <option value="{{ company['id'] }}">
+          {{ company["code"] }} —
+          {{ company["trade_name"] or company["legal_name"] }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit">Registrar fotografia</button>
+  </form>
+</div>
+{% endif %}
+
+<script>
+function openQuotationRequests() {
+  const company = document.getElementById("purchase-company-filter");
+  const months = document.getElementById("purchase-months-filter");
+  const params = new URLSearchParams();
+
+  if (company && company.value) {
+    params.set("company_id", company.value);
+  }
+
+  params.set(
+    "analysis_months",
+    months && months.value ? months.value : "3"
+  );
+
+  window.location.href =
+    "/purchasing-intelligence/rfq?" + params.toString();
+}
+</script>
+
+<script>
+function submitPurchaseRecalculation(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const company = document.getElementById("purchase-company-filter");
+  const months = document.getElementById("purchase-months-filter");
+  const submitButton = form.querySelector('button[type="submit"]');
+  const parameters = new URLSearchParams();
+
+  if (company && company.value.trim() !== "") {
+    parameters.set("company_id", company.value);
+  }
+
+  if (months && months.value.trim() !== "") {
+    parameters.set("analysis_months", months.value);
+  }
+
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.classList.add("is-loading");
+    submitButton.textContent = "Recalculando...";
+  }
+
+  const query = parameters.toString();
+  window.location.assign(
+    query
+      ? `/purchasing-intelligence?${query}`
+      : "/purchasing-intelligence"
+  );
+  return false;
+}
+</script>
+
+
+<script>
+(() => {
+  const workspace = document.getElementById("operational-workspace");
+  const table = document.getElementById("recommendation-table");
+  const search = document.getElementById("recommendation-search");
+  const clear = document.getElementById("clear-recommendation-search");
+  if (!workspace || !table || !search) return;
+
+  const tbody = table.querySelector("tbody");
+  const rows = [...tbody.querySelectorAll("tr[data-search]")];
+  const filters = [...document.querySelectorAll("[data-workspace-filter]")];
+  const pageSize = document.getElementById("workspace-page-size");
+  const prev = document.getElementById("workspace-prev");
+  const next = document.getElementById("workspace-next");
+  const pageLabel = document.getElementById("workspace-page-label");
+  const pageButtons = document.getElementById("workspace-page-buttons");
+  const visibleCount = document.getElementById("visible-recommendation-count");
+  let activeFilter = "all";
+  let page = 1;
+  let sortIndex = null;
+  let sortDirection = 1;
+
+  function numericValue(value) {
+    const normalized = String(value)
+      .replace(/\./g, "")
+      .replace(",", ".")
+      .replace(/[^\d.-]/g, "");
+    const number = Number(normalized);
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  function filteredRows() {
+    const term = search.value.trim().toLowerCase();
+    return rows.filter(row => {
+      const matchesSearch = !term || row.dataset.search.includes(term);
+      const matchesFilter = activeFilter === "all" ||
+        row.dataset.status.split(" ").includes(activeFilter);
+      return matchesSearch && matchesFilter;
+    });
+  }
+
+  function renderPageButtons(totalPages) {
+    if (!pageButtons) return;
+    pageButtons.innerHTML = "";
+    const startPage = Math.max(1, Math.min(page - 2, totalPages - 4));
+    const endPage = Math.min(totalPages, startPage + 4);
+    for (let number = startPage; number <= endPage; number += 1) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = String(number);
+      button.className = number === page ? "active" : "";
+      button.setAttribute("aria-label", `Ir para a página ${number}`);
+      if (number === page) button.setAttribute("aria-current", "page");
+      button.addEventListener("click", () => { page = number; render(); });
+      pageButtons.appendChild(button);
+    }
+  }
+
+  function render() {
+    let matching = filteredRows();
+    if (sortIndex !== null) {
+      matching = [...matching].sort((a, b) => {
+        const aCell = a.children[sortIndex];
+        const bCell = b.children[sortIndex];
+        const numeric = document.querySelector(`.sb-sort[data-sort-index="${sortIndex}"]`)?.hasAttribute("data-sort-number");
+        const av = numeric ? numericValue(aCell.textContent) : aCell.textContent.trim().toLowerCase();
+        const bv = numeric ? numericValue(bCell.textContent) : bCell.textContent.trim().toLowerCase();
+        return (av > bv ? 1 : av < bv ? -1 : 0) * sortDirection;
+      });
+      matching.forEach(row => tbody.appendChild(row));
+    }
+
+    const size = Number(pageSize?.value || 15);
+    const pages = Math.max(1, Math.ceil(matching.length / size));
+    page = Math.min(page, pages);
+    const start = (page - 1) * size;
+    const visible = new Set(matching.slice(start, start + size));
+
+    rows.forEach(row => {
+      row.hidden = !visible.has(row);
+      row.setAttribute("aria-hidden", row.hidden ? "true" : "false");
+    });
+    if (visibleCount) visibleCount.textContent = matching.length;
+    if (pageLabel) pageLabel.textContent = `Página ${page} de ${pages}`;
+    renderPageButtons(pages);
+    if (prev) prev.disabled = page <= 1;
+    if (next) next.disabled = page >= pages;
+  }
+
+  filters.forEach(button => button.addEventListener("click", () => {
+    activeFilter = button.dataset.workspaceFilter;
+    filters.forEach(item => item.classList.toggle("active", item === button));
+    page = 1;
+    render();
+  }));
+
+  search.addEventListener("input", () => { page = 1; render(); });
+  clear?.addEventListener("click", () => {
+    search.value = "";
+    activeFilter = "all";
+    filters.forEach(item => item.classList.toggle("active", item.dataset.workspaceFilter === "all"));
+    page = 1;
+    render();
+    search.focus();
+  });
+  pageSize?.addEventListener("change", () => { page = 1; render(); });
+  prev?.addEventListener("click", () => { page = Math.max(1, page - 1); render(); });
+  next?.addEventListener("click", () => { page += 1; render(); });
+
+  document.querySelectorAll(".sb-sort").forEach(button => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.sortIndex);
+      sortDirection = sortIndex === index ? sortDirection * -1 : 1;
+      sortIndex = index;
+      document.querySelectorAll(".sb-sort").forEach(item => item.classList.remove("active"));
+      button.classList.add("active");
+      button.querySelector("span").textContent = sortDirection === 1 ? "↑" : "↓";
+      page = 1;
+      render();
+    });
+  });
+
+  const drawer = document.getElementById("sb-ai-drawer");
+  const drawerPanel = drawer?.querySelector(".sb-ai-drawer-panel");
+
+  function moneylessNumber(value) {
+    const number = Number(String(value ?? "").replace(",", "."));
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  function explainRow(row) {
+    if (!drawer || !row) return;
+    const available = moneylessNumber(row.dataset.available);
+    const consumption = moneylessNumber(row.dataset.consumption);
+    const coverage = row.dataset.coverage === "" ? null : moneylessNumber(row.dataset.coverage);
+    const reorder = moneylessNumber(row.dataset.reorderPoint);
+    const safety = moneylessNumber(row.dataset.safetyStock);
+    const suggested = moneylessNumber(row.dataset.suggested);
+    const critical = row.dataset.status.split(" ").includes("critical");
+    const attention = row.dataset.status.split(" ").includes("attention");
+    const severity = critical ? "Crítico" : attention ? "Atenção" : suggested > 0 ? "Comprar" : "Saudável";
+
+    document.getElementById("drawer-product-code").textContent = row.dataset.productCode || "—";
+    document.getElementById("drawer-product-description").textContent = row.dataset.productDescription || "—";
+    const severityElement = document.getElementById("drawer-severity");
+    severityElement.textContent = severity;
+    severityElement.className = `sb-ai-drawer-severity ${severity.toLowerCase().replace("í", "i").replace("ç", "c")}`;
+    document.getElementById("drawer-available").textContent = row.dataset.available || "0";
+    document.getElementById("drawer-consumption").textContent = row.dataset.consumption || "0";
+    document.getElementById("drawer-coverage").textContent = coverage === null ? "Sem consumo" : `${coverage} dias`;
+    document.getElementById("drawer-reorder").textContent = row.dataset.reorderPoint || "0";
+    document.getElementById("drawer-safety").textContent = row.dataset.safetyStock || "0";
+    document.getElementById("drawer-rupture").textContent = row.dataset.rupture || "—";
+    document.getElementById("drawer-supplier").textContent = row.dataset.supplier || "Não definido";
+
+    let reason = "O estoque está saudável e não exige compra neste momento.";
+    if (suggested > 0) {
+      const parts = [`o estoque disponível é ${available}`, `o ponto de reposição é ${reorder}`];
+      if (coverage !== null) parts.push(`a cobertura estimada é de ${coverage} dias`);
+      if (consumption > 0) parts.push(`o consumo médio diário é ${consumption}`);
+      reason = `O SmartBuy recomenda comprar ${suggested} UN porque ${parts.join(", ")}.`;
+      if (critical) reason += " A cobertura está dentro da faixa crítica e a ação deve ser priorizada.";
+    } else if (coverage === null) {
+      reason = "Não há consumo suficiente no período analisado. O SmartBuy recomenda monitorar antes de comprar.";
+    }
+    document.getElementById("drawer-reason").textContent = reason;
+    document.getElementById("drawer-generate-quote").hidden = suggested <= 0;
+    drawer.classList.add("open");
+    drawer.setAttribute("aria-hidden", "false");
+    document.body.classList.add("sb-drawer-open");
+    setTimeout(() => drawerPanel?.focus(), 80);
+  }
+
+  function closeDrawer() {
+    if (!drawer) return;
+    drawer.classList.remove("open");
+    drawer.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("sb-drawer-open");
+  }
+
+  function focusProduct(code, openExplanation = true) {
+    search.value = code;
+    const targetRow = rows.find(item => item.dataset.code === code);
+    const targetStatus = targetRow?.dataset.status || "all";
+    activeFilter = targetStatus.includes("critical") ? "critical" : targetStatus.includes("attention") ? "attention" : targetStatus.includes("buy") ? "buy" : "all";
+    filters.forEach(item => item.classList.toggle("active", item.dataset.workspaceFilter === activeFilter));
+    page = 1;
+    render();
+    workspace.scrollIntoView({behavior: "smooth", block: "start"});
+    requestAnimationFrame(() => {
+      const row = rows.find(item => item.dataset.code === code);
+      if (row) {
+        row.classList.add("is-focused");
+        row.scrollIntoView({behavior: "smooth", block: "center"});
+        setTimeout(() => row.classList.remove("is-focused"), 3000);
+        if (openExplanation) setTimeout(() => explainRow(row), 420);
+      }
+    });
+  }
+
+  document.querySelectorAll("[data-focus-product]").forEach(button => {
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      focusProduct(button.dataset.focusProduct, true);
+    });
+  });
+
+  document.querySelectorAll("[data-explain-product]").forEach(button => {
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      const row = rows.find(item => item.dataset.code === button.dataset.explainProduct);
+      explainRow(row);
+    });
+  });
+
+  document.querySelectorAll("[data-close-ai-drawer]").forEach(button => button.addEventListener("click", closeDrawer));
+  document.getElementById("drawer-generate-quote")?.addEventListener("click", openQuotationRequests);
+  document.addEventListener("keydown", event => { if (event.key === "Escape") closeDrawer(); });
+
+  render();
+})();
+</script>
+
+{% endblock %}

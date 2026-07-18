@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Produtos" %}
+
+{% block content %}
+<section class="sbu-page">
+  <header class="sbu-page-header sbu-page-header-actions">
+    <div class="sbu-page-copy">
+      <p class="sbu-eyebrow">CATÁLOGO INTELIGENTE</p>
+      <div class="sbu-title-row">
+        <span class="sbu-title-icon" aria-hidden="true">◇</span>
+        <div>
+          <h1>Produtos</h1>
+          <p>Gerencie o catálogo, classificação, tributação, fornecedores e integração com ERP.</p>
+        </div>
+      </div>
+      <div class="sbu-status-row">
+        <span><i></i>{{ total }} produto(s) encontrado(s)</span>
+        <span><i></i>Busca inteligente ativa</span>
+        <span><i></i>Importação auditável</span>
+      </div>
+    </div>
+
+    <div class="sbu-header-actions">
+      {% if "catalog.import" in permissions %}
+      <a class="sbu-btn sbu-btn-outline" href="/products/template.xlsx">Modelo Excel</a>
+      {% endif %}
+      {% if "catalog.export" in permissions %}
+      <a class="sbu-btn sbu-btn-outline" href="/products/export.xlsx">Exportar Excel</a>
+      {% endif %}
+      {% if "catalog.write" in permissions %}
+      <a class="sbu-btn sbu-btn-primary" href="/products/new">Novo produto</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="sbu-kpi-grid" aria-label="Resumo do catálogo">
+    <article class="sbu-kpi blue">
+      <span class="sbu-kpi-icon">◇</span>
+      <div><small>Produtos encontrados</small><strong>{{ total }}</strong><p>Conforme os filtros atuais</p></div>
+    </article>
+    <article class="sbu-kpi green">
+      <span class="sbu-kpi-icon">⌕</span>
+      <div><small>Pesquisa</small><strong>Inteligente</strong><p>Código, ERP, barras e descrição</p></div>
+    </article>
+    <article class="sbu-kpi violet">
+      <span class="sbu-kpi-icon">▤</span>
+      <div><small>Integração</small><strong>Excel / ERP</strong><p>Importação e códigos externos</p></div>
+    </article>
+    <article class="sbu-kpi gold">
+      <span class="sbu-kpi-icon">◆</span>
+      <div><small>Governança</small><strong>Auditável</strong><p>Histórico por produto</p></div>
+    </article>
+  </section>
+
+  {% if request.query_params.get("import_success") %}
+  <div class="sbu-alert sbu-alert-success">
+    Importação confirmada: {{ request.query_params.get("import_success") }} linha(s) aplicada(s).
+  </div>
+  {% endif %}
+
+  <section class="sbu-panel">
+    <header class="sbu-panel-header">
+      <div>
+        <p class="sbu-eyebrow">PESQUISA E FILTROS</p>
+        <h2>Localizar produtos</h2>
+        <p>Pesquise e refine o catálogo sem alterar os dados cadastrados.</p>
+      </div>
+    </header>
+    <form class="sbu-panel-body" method="get" action="/products">
+      <div class="sbu-form-grid four">
+        <label class="sbu-field sbu-field-wide">
+          Pesquisa inteligente
+          <input id="smart-product-search" name="q" value="{{ q }}" placeholder="Código, descrição, ERP, barras ou referência" autocomplete="off">
+          <div id="smart-search-results" class="smart-search-results" hidden></div>
+        </label>
+        <label class="sbu-field">
+          Categoria
+          <select name="category_id">
+            <option value="">Todas as categorias</option>
+            {% for item in categories %}
+            <option value="{{ item['id'] }}" {{ 'selected' if category_id == item['id'] else '' }}>{{ item["name"] }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="sbu-field">
+          Marca
+          <select name="brand_id">
+            <option value="">Todas as marcas</option>
+            {% for item in brands %}
+            <option value="{{ item['id'] }}" {{ 'selected' if brand_id == item['id'] else '' }}>{{ item["name"] }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="sbu-field">
+          Status
+          <select name="status">
+            <option value="active" {{ 'selected' if status == 'active' else '' }}>Ativos</option>
+            <option value="inactive" {{ 'selected' if status == 'inactive' else '' }}>Inativos</option>
+            <option value="all" {{ 'selected' if status == 'all' else '' }}>Todos</option>
+          </select>
+        </label>
+      </div>
+      <div class="sbu-form-actions">
+        <a class="sbu-btn sbu-btn-ghost" href="/products">Limpar filtros</a>
+        <button class="sbu-btn sbu-btn-primary" type="submit">Aplicar filtros</button>
+      </div>
+    </form>
+  </section>
+
+  {% if "catalog.import" in permissions %}
+  <section class="sbu-panel">
+    <header class="sbu-panel-header">
+      <div>
+        <p class="sbu-eyebrow">IMPORTAÇÃO INTELIGENTE</p>
+        <h2>Validar planilha antes de gravar</h2>
+        <p>O SmartBuy apresenta erros e alertas antes de aplicar qualquer alteração.</p>
+      </div>
+    </header>
+    <form class="sbu-panel-body sbu-upload-row" method="post" action="/products/intelligent/import/validate" enctype="multipart/form-data">
+      <label class="sbu-field sbu-upload-field">
+        Arquivo Excel (.xlsx)
+        <input name="file" type="file" accept=".xlsx" required>
+      </label>
+      <button class="sbu-btn sbu-btn-primary" type="submit">Validar planilha</button>
+    </form>
+  </section>
+  {% endif %}
+
+  <section class="sbu-workspace">
+    <header class="sbu-workspace-header">
+      <div>
+        <p class="sbu-eyebrow">CATÁLOGO OPERACIONAL</p>
+        <h2>Produtos cadastrados</h2>
+        <p>Consulte identificação, classificação, fornecedor, tributação e status.</p>
+      </div>
+      <span class="sbu-badge sbu-badge-info">Página {{ page }} de {{ pages }}</span>
+    </header>
+
+    <div class="sbu-table-scroll">
+      <table class="sbu-table sbu-table-products">
+        <thead>
+          <tr>
+            <th>Código</th><th>Descrição</th><th>Categoria</th><th>Marca</th><th>Un.</th><th>Fornecedor</th><th>NCM</th><th>IPI</th><th>ICMS</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr>
+            <td><a class="sbu-table-link" href="/products/item/{{ product['id'] }}">{{ product["internal_code"] }}</a></td>
+            <td><strong>{{ product["description"] }}</strong></td>
+            <td>{{ product["category_name"] or "—" }}</td>
+            <td>{{ product["brand_name"] or "—" }}</td>
+            <td>{{ product["unit_code"] }}</td>
+            <td>{{ product["supplier_name"] or "—" }}</td>
+            <td>{{ product["ncm"] or "—" }}</td>
+            <td>{{ product["ipi_rate"] }}%</td>
+            <td>{{ product["icms_rate"] }}%</td>
+            <td><span class="sbu-badge {{ 'sbu-badge-success' if product['active'] else 'sbu-badge-danger' }}">{{ "Ativo" if product["active"] else "Inativo" }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td class="sbu-table-empty" colspan="10">Nenhum produto encontrado para os filtros selecionados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="sbu-workspace-footer">
+      <span>{{ total }} produto(s) encontrado(s)</span>
+      <strong>Página {{ page }} de {{ pages }}</strong>
+    </footer>
+  </section>
+</section>
+
+<script>
+(() => {
+  const input = document.getElementById("smart-product-search");
+  const box = document.getElementById("smart-search-results");
+  if (!input || !box) return;
+
+  let timer;
+  const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+  })[character]);
+
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    const term = input.value.trim();
+    if (term.length < 2) {
+      box.innerHTML = "";
+      box.hidden = true;
+      return;
+    }
+
+    timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`/products/intelligent/search?term=${encodeURIComponent(term)}`);
+        if (!response.ok) throw new Error("Falha na pesquisa");
+        const data = await response.json();
+        const results = Array.isArray(data.results) ? data.results : [];
+
+        box.innerHTML = results.map(item => `
+          <a href="/products/item/${encodeURIComponent(item.id)}">
+            <strong>${escapeHTML(item.internal_code)}</strong>
+            <span>${escapeHTML(item.description)}</span>
+            <small>${escapeHTML(item.external_code || item.erp_code || item.barcode || "")}</small>
+          </a>
+        `).join("");
+        box.hidden = results.length === 0;
+      } catch (error) {
+        box.innerHTML = "";
+        box.hidden = true;
+      }
+    }, 250);
+  });
+
+  document.addEventListener("click", event => {
+    if (!box.contains(event.target) && event.target !== input) box.hidden = true;
+  });
+})();
+</script>
+{% endblock %}

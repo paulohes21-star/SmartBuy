@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Dashboard" %}
+{% block content %}
+<section class="sbu-page">
+  <header class="sbu-page-header">
+    <div class="sbu-page-copy"><p class="sbu-eyebrow">VISÃO GERAL DA PLATAFORMA</p><div class="sbu-title-row"><span class="sbu-title-icon" aria-hidden="true">↗</span><div><h1>Bem-vindo, {{ user["full_name"] }}.</h1><p>Catálogo, fornecedores, usuários e parâmetros de estoque integrados em uma única plataforma.</p></div></div><div class="sbu-status-row"><span><i></i>SmartBuy Online</span><span><i></i>Base multiempresa</span><span><i></i>Auditoria ativa</span></div></div>
+  </header>
+
+  <section class="sbu-kpi-grid" aria-label="Indicadores da plataforma">
+    <article class="sbu-kpi blue"><span class="sbu-kpi-icon">▦</span><div><small>Empresas</small><strong>{{ companies }}</strong><p>Matriz e filiais cadastradas</p></div></article>
+    <article class="sbu-kpi green"><span class="sbu-kpi-icon">◇</span><div><small>Produtos</small><strong>{{ products }}</strong><p>Itens do catálogo</p></div></article>
+    <article class="sbu-kpi violet"><span class="sbu-kpi-icon">◎</span><div><small>Fornecedores</small><strong>{{ suppliers }}</strong><p>Parceiros comerciais</p></div></article>
+    <article class="sbu-kpi gold"><span class="sbu-kpi-icon">◆</span><div><small>Usuários</small><strong>{{ users }}</strong><p>Acessos controlados</p></div></article>
+  </section>
+
+  <section class="sbu-panel">
+    <header class="sbu-panel-header"><div><p class="sbu-eyebrow">SMARTBUY ENTERPRISE</p><h2>Plataforma preparada para decisões de compras</h2><p>Utilize o menu lateral para acessar catálogo, inteligência de compras, cotações e integrações ERP.</p></div></header>
+    <div class="sbu-panel-body sbu-toolbar">
+      <div><span class="sbu-badge sbu-badge-success">Sistema operacional</span></div>
+      <div class="sbu-toolbar-group"><a class="sbu-btn sbu-btn-outline" href="/products">Abrir produtos</a>{% if "purchasing_intelligence.read" in permissions %}<a class="sbu-btn sbu-btn-primary" href="/purchasing-intelligence">Inteligência de compras</a>{% endif %}</div>
+    </div>
+  </section>
+</section>
+{% endblock %}

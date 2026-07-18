@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Transferências Inteligentes" %}
+
+{% block content %}
+<section class="ti-page">
+  <header class="ti-hero">
+    <div>
+      <p class="eyebrow">SMARTBUY TRANSFER INTELLIGENCE 6.6</p>
+      <h1>Transferir antes de comprar</h1>
+      <p>O motor cruza estoques e consumo entre empresas para localizar excesso, risco de ruptura e compras que podem ser evitadas.</p>
+      <div class="ti-status">
+        <span><i></i> Motor ativo</span>
+        <span>Proteção do estoque de origem</span>
+        <span>Análise entre empresas</span>
+      </div>
+    </div>
+    <a class="ti-back" href="/purchasing-intelligence">← Recomendações de compra</a>
+  </header>
+
+  <nav class="ti-tabs" aria-label="Inteligência de compras">
+    <a href="/purchasing-intelligence">Recomendações de Compra</a>
+    <a class="active" href="/transfer-intelligence">Transferências Inteligentes</a>
+  </nav>
+
+  <form class="ti-filter" method="get">
+    <label>Empresa
+      <select name="company_id">
+        <option value="">Todas as empresas</option>
+        {% for company in companies %}
+        <option value="{{ company.id }}" {{ "selected" if selected_company_id == company.id else "" }}>
+          {{ company.code }} — {{ company.trade_name or company.legal_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Histórico
+      <select name="analysis_months">
+        {% for value in [1, 3, 6, 12] %}
+        <option value="{{ value }}" {{ "selected" if selected_analysis_months == value else "" }}>{{ value }} mês(es)</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Crítico até
+      <input type="number" name="critical_days" min="1" value="{{ selected_critical_days }}">
+      <small>dias</small>
+    </label>
+    <label>Destino após transferência
+      <input type="number" name="target_days" min="1" value="{{ selected_target_days }}">
+      <small>dias</small>
+    </label>
+    <label>Excesso acima de
+      <input type="number" name="excess_days" min="1" value="{{ selected_excess_days }}">
+      <small>dias</small>
+    </label>
+    <button type="submit">Recalcular inteligência</button>
+  </form>
+
+  <section class="ti-kpis">
+    <article class="green"><span>⇄</span><div><small>Transferências sugeridas</small><strong>{{ metrics.recommendations }}</strong><em>{{ metrics.products }} produto(s)</em></div></article>
+    <article class="blue"><span>▣</span><div><small>Unidades redistribuídas</small><strong>{{ metrics.qty_total_units }}</strong><em>estoque interno aproveitado</em></div></article>
+    <article class="gold"><span>R$</span><div><small>Compras potencialmente evitadas</small><strong>{{ metrics.money_total_avoided }}</strong><em>impacto financeiro estimado</em></div></article>
+    <article class="red"><span>!</span><div><small>Destinos críticos</small><strong>{{ metrics.critical_count }}</strong><em>prioridade imediata</em></div></article>
+  </section>
+
+  <section class="ti-workspace">
+    <header>
+      <div>
+        <p class="eyebrow">OPORTUNIDADES PRIORIZADAS</p>
+        <h2>Plano de redistribuição recomendado</h2>
+        <p>{{ metrics.origins }} origem(ns) podem abastecer {{ metrics.destinations }} destino(s) sem comprometer o estoque de segurança.</p>
+      </div>
+      <span>{{ metrics.recommendations }} recomendação(ões)</span>
+    </header>
+
+    <div class="ti-table-scroll">
+      <table>
+        <thead><tr>
+          <th>Prioridade</th>
+          <th>Produto</th>
+          <th>Origem</th>
+          <th>Destino</th>
+          <th>Transferir</th>
+          <th>Compra evitada</th>
+          <th>Score</th>
+          <th>Decisão</th>
+        </tr></thead>
+        <tbody>
+          {% for item in recommendations %}
+          <tr>
+            <td><span class="ti-priority {{ item.priority|lower }}">{{ item.priority }}</span></td>
+            <td><strong>{{ item.internal_code }}</strong><small>{{ item.description }}</small></td>
+            <td><strong>{{ item.origin_company }}</strong><small>{{ qty(item.origin_stock) }} UN · {% if item.origin_coverage_days is not none %}{{ "%.0f"|format(item.origin_coverage_days) }} dias{% else %}sem consumo{% endif %}</small></td>
+            <td><strong>{{ item.destination_company }}</strong><small>{{ qty(item.destination_stock) }} UN · {% if item.destination_coverage_days is not none %}{{ "%.0f"|format(item.destination_coverage_days) }} dias{% else %}sem histórico{% endif %}</small></td>
+            <td><strong class="ti-quantity">{{ qty(item.quantity) }} UN</strong></td>
+            <td><strong>{{ money(item.avoided_purchase) }}</strong><small>{{ money(item.unit_cost) }} / UN</small></td>
+            <td><span class="ti-score">{{ item.score }}/100</span></td>
+            <td><button type="button" class="ti-explain" data-ti-explain>Ver explicação</button></td>
+          </tr>
+          <tr class="ti-detail" hidden>
+            <td colspan="8"><strong>Por que o SmartBuy recomenda esta ação?</strong><p>{{ item.explanation }}</p></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="ti-empty">
+            <strong>Nenhuma transferência segura encontrada.</strong>
+            <span>Isso pode indicar estoque equilibrado ou ausência de histórico de consumo suficiente.</span>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="ti-rules">
+    <article><strong>1. Detectar risco</strong><span>Destino abaixo da cobertura crítica.</span></article>
+    <article><strong>2. Encontrar excesso</strong><span>Origem acima da cobertura definida.</span></article>
+    <article><strong>3. Proteger a origem</strong><span>Nunca reduz abaixo do estoque de segurança.</span></article>
+    <article><strong>4. Medir economia</strong><span>Quantidade transferida × custo de referência.</span></article>
+  </section>
+</section>
+
+<script>
+document.addEventListener("click", function (event) {
+  const button = event.target.closest("[data-ti-explain]");
+  if (!button) return;
+  const row = button.closest("tr");
+  const detail = row && row.nextElementSibling;
+  if (!detail || !detail.classList.contains("ti-detail")) return;
+  detail.hidden = !detail.hidden;
+  button.textContent = detail.hidden ? "Ver explicação" : "Ocultar explicação";
+});
+</script>
+{% endblock %}

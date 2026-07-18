@@ -1,0 +1,14 @@
+/* SmartBuy Sprint 7 — complemento da página Produtos */
+.sbu-page-header-actions{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+.sbu-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.sbu-form-grid.four{grid-template-columns:minmax(280px,2fr) repeat(3,minmax(150px,1fr))}
+.sbu-field-wide{position:relative}
+.sbu-upload-row{display:flex;align-items:flex-end;gap:14px}
+.sbu-upload-field{flex:1}
+.sbu-table-products{min-width:1180px}
+.sbu-table-link{color:var(--sbu-green,#20dda5);font-weight:800;text-decoration:none}
+.sbu-table-link:hover{text-decoration:underline}
+.sbu-workspace-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 18px;border-top:1px solid rgba(100,190,165,.14);color:#87a99f;font-size:.78rem}
+.sbu-workspace-footer strong{color:#dff5ee}
+@media(max-width:1180px){.sbu-page-header-actions{align-items:flex-start;flex-direction:column}.sbu-header-actions{justify-content:flex-start}.sbu-form-grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}.sbu-field-wide{grid-column:1/-1}}
+@media(max-width:720px){.sbu-header-actions,.sbu-upload-row{align-items:stretch;flex-direction:column}.sbu-header-actions .sbu-btn,.sbu-upload-row .sbu-btn{width:100%}.sbu-form-grid.four{grid-template-columns:1fr}.sbu-field-wide{grid-column:auto}.sbu-workspace-footer{align-items:flex-start;flex-direction:column}}

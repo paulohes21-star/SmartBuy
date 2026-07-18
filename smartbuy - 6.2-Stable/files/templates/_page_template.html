@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Nome do módulo" %}
+
+{% block content %}
+<section class="sbu-page">
+  <header class="sbu-page-header">
+    <div class="sbu-page-copy">
+      <p class="sbu-eyebrow">ÁREA DO SMARTBUY</p>
+      <div class="sbu-title-row">
+        <span class="sbu-title-icon" aria-hidden="true">◇</span>
+        <div>
+          <h1>Nome da nova tela</h1>
+          <p>Explique em uma frase qual decisão ou operação esta tela permite realizar.</p>
+        </div>
+      </div>
+      <div class="sbu-status-row" aria-label="Status do módulo">
+        <span><i></i>Módulo operacional</span>
+        <span><i></i>Dados atualizados</span>
+      </div>
+    </div>
+
+    <div class="sbu-header-actions">
+      <a class="sbu-btn sbu-btn-outline" href="#">Ação secundária</a>
+      <a class="sbu-btn sbu-btn-primary" href="#">Ação principal</a>
+    </div>
+  </header>
+
+  <section class="sbu-kpi-grid" aria-label="Indicadores principais">
+    <article class="sbu-kpi blue" tabindex="0">
+      <span class="sbu-kpi-icon">◇</span>
+      <div><small>Indicador 1</small><strong>{{ metric_1|default(0) }}</strong><p>Contexto do indicador</p></div>
+    </article>
+    <article class="sbu-kpi green" tabindex="0">
+      <span class="sbu-kpi-icon">✓</span>
+      <div><small>Indicador 2</small><strong>{{ metric_2|default(0) }}</strong><p>Contexto do indicador</p></div>
+    </article>
+    <article class="sbu-kpi violet" tabindex="0">
+      <span class="sbu-kpi-icon">◷</span>
+      <div><small>Indicador 3</small><strong>{{ metric_3|default(0) }}</strong><p>Contexto do indicador</p></div>
+    </article>
+    <article class="sbu-kpi gold" tabindex="0">
+      <span class="sbu-kpi-icon">R$</span>
+      <div><small>Indicador 4</small><strong>{{ metric_4|default(0) }}</strong><p>Contexto do indicador</p></div>
+    </article>
+  </section>
+
+  {% if error %}<div class="sbu-alert sbu-alert-danger">{{ error }}</div>{% endif %}
+
+  <section class="sbu-workspace">
+    <header class="sbu-workspace-header">
+      <div><p class="sbu-eyebrow">WORKSPACE OPERACIONAL</p><h2>Dados e ações</h2><p>Pesquise, filtre e execute as atividades deste módulo.</p></div>
+      <div class="sbu-toolbar-group">
+        <input class="sbu-input" type="search" placeholder="Pesquisar..." aria-label="Pesquisar">
+        <button class="sbu-btn sbu-btn-outline" type="button">Filtrar</button>
+      </div>
+    </header>
+
+    <div class="sbu-table-scroll">
+      <table class="sbu-table">
+        <thead><tr><th>Código</th><th>Descrição</th><th>Status</th><th>Ação</th></tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td><strong>{{ row.code }}</strong></td>
+            <td><div class="sbu-table-main"><strong>{{ row.name }}</strong><small>{{ row.description or '—' }}</small></div></td>
+            <td><span class="sbu-badge sbu-badge-success">Ativo</span></td>
+            <td><a class="sbu-btn sbu-btn-secondary sbu-btn-sm" href="#">Abrir</a></td>
+          </tr>
+          {% else %}
+          <tr><td class="sbu-table-empty" colspan="4">Nenhum registro encontrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}

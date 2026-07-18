@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% set title = "SmartBuy — Usuários" %}
+{% block content %}
+<section class="sbu-page">
+  <header class="sbu-page-header">
+    <div class="sbu-page-copy">
+      <p class="sbu-eyebrow">GOVERNANÇA E ACESSOS</p>
+      <div class="sbu-title-row"><span class="sbu-title-icon" aria-hidden="true">◎</span><div><h1>Usuários</h1><p>Controle quem pode visualizar ou administrar cada área do SmartBuy.</p></div></div>
+      <div class="sbu-status-row"><span><i></i>Permissões por perfil</span><span><i></i>Acesso auditável</span></div>
+    </div>
+  </header>
+
+  <section class="sbu-kpi-grid" aria-label="Resumo de usuários">
+    <article class="sbu-kpi blue"><span class="sbu-kpi-icon">◎</span><div><small>Total de usuários</small><strong>{{ users|length }}</strong><p>Cadastros disponíveis</p></div></article>
+    <article class="sbu-kpi green"><span class="sbu-kpi-icon">✓</span><div><small>Controle de acesso</small><strong>Ativo</strong><p>Permissões aplicadas</p></div></article>
+    <article class="sbu-kpi violet"><span class="sbu-kpi-icon">◆</span><div><small>Modelo de acesso</small><strong>Por perfil</strong><p>Níveis de permissão</p></div></article>
+    <article class="sbu-kpi gold"><span class="sbu-kpi-icon">◷</span><div><small>Rastreabilidade</small><strong>Auditável</strong><p>Ações identificadas</p></div></article>
+  </section>
+
+  {% if error %}<div class="sbu-alert sbu-alert-danger">{{ error }}</div>{% endif %}
+
+  {% if "users.write" in permissions %}
+  <section class="sbu-panel">
+    <header class="sbu-panel-header"><div><p class="sbu-eyebrow">NOVO ACESSO</p><h2>Cadastrar usuário</h2><p>Defina os dados e o perfil inicial.</p></div></header>
+    <form class="sbu-panel-body" method="post" action="/users">
+      <div class="sbu-form-grid">
+        <label class="sbu-field">Nome<input name="full_name" required></label>
+        <label class="sbu-field">E-mail<input name="email" type="email" required></label>
+        <label class="sbu-field">Senha<input name="password" type="password" minlength="10" required><small>Mínimo de 10 caracteres.</small></label>
+        <label class="sbu-field">Perfil<select name="role_id">{% for r in roles %}<option value="{{ r['id'] }}">{{ r["name"] }}</option>{% endfor %}</select></label>
+      </div>
+      <div class="sbu-form-actions"><button class="sbu-btn sbu-btn-primary" type="submit">Cadastrar usuário</button></div>
+    </form>
+  </section>
+  {% endif %}
+
+  <section class="sbu-workspace">
+    <header class="sbu-workspace-header"><div><p class="sbu-eyebrow">CONTROLE DE ACESSO</p><h2>Usuários cadastrados</h2><p>Visão consolidada dos perfis e status.</p></div></header>
+    <div class="sbu-table-scroll"><table class="sbu-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th></tr></thead><tbody>
+      {% for u in users %}<tr><td><strong>{{ u["full_name"] }}</strong></td><td>{{ u["email"] }}</td><td>{{ u["role_name"] }}</td><td><span class="sbu-badge {{ 'sbu-badge-success' if u['active'] else 'sbu-badge-danger' }}">{{ "Ativo" if u["active"] else "Inativo" }}</span></td></tr>{% else %}<tr><td class="sbu-table-empty" colspan="4">Nenhum usuário cadastrado.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+</section>
+{% endblock %}
